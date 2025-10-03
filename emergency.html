@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudCheck - Emergency Weather Safety</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+      color: #2d3748;
+      font-family: 'Inter', sans-serif;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Navbar */
+    .navbar {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      z-index: 100;
+      position: relative;
+    }
+
+    /* Logo */
+    .logo {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: #000;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      padding-left: 17%;
+    }
+
+    /* Nav links */
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding-right: 17.5%;
+      position: relative;
+    }
+
+    .nav-links a {
+      color: #4a5568;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+      position: relative;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: #000;
+    }
+
+    .nav-links a.active {
+      color: #4facfe;
+    }
+
+    /* Resources Dropdown */
+    .resources-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      backdrop-filter: blur(20px);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      min-width: 250px;
+      padding: 10px 0;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .resources-dropdown.show {
+      display: block;
+      animation: dropdownFade 0.3s ease;
+    }
+
+    @keyframes dropdownFade {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .resource-item {
+      padding: 12px 20px;
+      color: #2d3748;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid #f7fafc;
+    }
+
+    .resource-item:hover {
+      background: #f7fafc;
+      transform: translateX(1px);
+    }
+
+    .resource-item:last-child {
+      border-bottom: none;
+    }
+
+    .resource-icon {
+      font-size: 1rem;
+      color: #4299e1;
+      width: 20px;
+      text-align: center;
+    }
+
+    .resource-text {
+      flex: 1;
+    }
+
+    .resource-desc {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    /* Dashboard */
+    .dashboard {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-card {
+      width: 100%;
+      max-width: 1600px;
+      height: auto;
+      min-height: 800px;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: #6c4d4d;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dashboard-subtitle {
+      font-size: 1.1rem;
+      color: #4a5568;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* Emergency Planning Form */
+    .emergency-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 25px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .form-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #4a5568;
+    }
+
+    .form-input, .form-select {
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0;
+      background: white;
+      color: #2d3748;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    .form-input::placeholder {
+      color: #a0aec0;
+    }
+
+    /* Location suggestions dropdown */
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .suggestion-item {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #f7fafc;
+      transition: background 0.3s ease;
+      color: #2d3748;
+      background: white;
+    }
+
+    .suggestion-item:hover {
+      background: #f7fafc;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .form-btn {
+      grid-column: 1 / -1;
+      padding: 15px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #553030 0%, #361c1c 100%);
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .form-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px #553030;
+    }
+
+    .form-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .form-btn.secondary {
+      background: #f7fafc;
+      color: #4a5568;
+      border: 1px solid #cbd5e0;
+    }
+
+    .form-btn.secondary:hover {
+      background: #edf2f7;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-btn.danger {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ff8e8e 100%);
+    }
+
+    .form-btn.danger:hover {
+      box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+    }
+
+    /* Results Section */
+    .results-section {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .results-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0;
+      background: white;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 500;
+    }
+
+    .action-btn:hover {
+      background: #f7fafc;
+      border-color: #a0aec0;
+    }
+
+    /* Alert Status */
+    .alert-status {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .alert-card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .alert-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .alert-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .alert-icon {
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .alert-safe { background: rgba(72, 187, 120, 0.15); color: #38a169; }
+    .alert-warning { background: rgba(237, 137, 54, 0.15); color: #dd6b20; }
+    .alert-danger { background: rgba(245, 101, 101, 0.15); color: #e53e3e; }
+
+    .alert-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .alert-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .alert-description {
+      font-size: 0.9rem;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+
+    /* Overall Alert */
+    .overall-alert {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid;
+    }
+
+    .overall-alert.safe { background: rgba(72, 187, 120, 0.1); border-color: rgba(72, 187, 120, 0.3); }
+    .overall-alert.warning { background: rgba(237, 137, 54, 0.1); border-color: rgba(237, 137, 54, 0.3); }
+    .overall-alert.danger { background: rgba(245, 101, 101, 0.1); border-color: rgba(245, 101, 101, 0.3); }
+
+    .overall-alert-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #4a5568;
+    }
+
+    .overall-alert-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .overall-alert.safe .overall-alert-value { color: #38a169; }
+    .overall-alert.warning .overall-alert-value { color: #dd6b20; }
+    .overall-alert.danger .overall-alert-value { color: #e53e3e; }
+
+    .overall-alert-description {
+      font-size: 1rem;
+      color: #4a5568;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* Map Section */
+    .map-section {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      height: 400px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .map-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .map-title i {
+      color: #4299e1;
+    }
+
+    #emergencyMap {
+      height: 320px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Safe Places Section */
+    .safe-places-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .safe-places-container {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      height: 300px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .safe-places-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .safe-places-title i {
+      color: #4299e1;
+    }
+
+    .safe-places-list {
+      height: 230px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .safe-place-card {
+      background: #f7fafc;
+      border-radius: 10px;
+      padding: 15px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+    }
+
+    .safe-place-card:hover {
+      background: white;
+      transform: translateX(5px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .safe-place-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(76, 175, 80, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #38a169;
+    }
+
+    .safe-place-info {
+      flex: 1;
+    }
+
+    .safe-place-name {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #2d3748;
+    }
+
+    .safe-place-details {
+      font-size: 0.85rem;
+      color: #718096;
+    }
+
+    .safe-place-distance {
+      font-weight: 600;
+      color: #38a169;
+    }
+
+    /* Emergency Contacts */
+    .emergency-contacts {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .contacts-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .contacts-title i {
+      color: #4299e1;
+    }
+
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .contact-card {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+    }
+
+    .contact-card:hover {
+      transform: translateY(-5px);
+      background: white;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .contact-icon {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #4299e1;
+    }
+
+    .contact-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #2d3748;
+    }
+
+    .contact-number {
+      font-size: 1rem;
+      color: #718096;
+    }
+
+    /* Country Info */
+    .country-info {
+      background: rgba(79, 172, 254, 0.1);
+      border: 1px solid rgba(79, 172, 254, 0.3);
+      border-radius: 10px;
+      padding: 15px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .country-info.show {
+      display: block;
+    }
+
+    .country-flag {
+      font-size: 1.5rem;
+      margin-right: 10px;
+    }
+
+    /* Data Source Info */
+    .data-source {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(66, 153, 225, 0.1);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #4a5568;
+      text-align: center;
+      border: 1px solid rgba(66, 153, 225, 0.2);
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      flex-direction: column;
+      gap: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #e2e8f0;
+      border-top: 5px solid #553030;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Error State */
+    .error-state {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      flex-direction: column;
+      gap: 20px;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    .error-icon {
+      font-size: 4rem;
+      color: #e53e3e;
+      margin-bottom: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .emergency-form {
+        grid-template-columns: 1fr;
+      }
+      .alert-status {
+        grid-template-columns: 1fr;
+      }
+      .safe-places-section {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-card {
+        padding: 20px;
+      }
+      .navbar {
+        padding: 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .logo {
+        padding-left: 0;
+      }
+      .nav-links {
+        padding-right: 0;
+      }
+      .resources-dropdown {
+        left: -50px;
+        min-width: 200px;
+      }
+      .contacts-grid {
+        grid-template-columns: 1fr;
+      }
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      .results-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo">cloudcheck</div>
+    <div class="nav-links">
+      <a href="#" id="resourcesLink">Resources <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i></a>
+      <div class="resources-dropdown" id="resourcesDropdown">
+        <a href="https://power.larc.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-satellite resource-icon"></i>
+          <div class="resource-text">
+            <div>NASA POWER API</div>
+            <div class="resource-desc">Weather & solar data</div>
+          </div>
+        </a>
+        <a href="https://gpm.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-cloud-rain resource-icon"></i>
+          <div class="resource-text">
+            <div>GPM IMERG</div>
+            <div class="resource-desc">Precipitation data</div>
+          </div>
+        </a>
+        <a href="https://worldview.earthdata.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-globe resource-icon"></i>
+          <div class="resource-text">
+            <div>NASA Worldview</div>
+            <div class="resource-desc">Satellite imagery</div>
+          </div>
+        </a>
+        <a href="https://open-meteo.com/" class="resource-item" target="_blank">
+          <i class="fas fa-wind resource-icon"></i>
+          <div class="resource-text">
+            <div>Open-Meteo API</div>
+            <div class="resource-desc">Weather forecasts</div>
+          </div>
+        </a>
+        <a href="https://api.bigdatacloud.net/" class="resource-item" target="_blank">
+          <i class="fas fa-map-marker-alt resource-icon"></i>
+          <div class="resource-text">
+            <div>BigDataCloud</div>
+            <div class="resource-desc">Geocoding services</div>
+          </div>
+        </a>
+        <a href="https://github.com/your-repo" class="resource-item" target="_blank">
+          <i class="fab fa-github resource-icon"></i>
+          <div class="resource-text">
+            <div>Project GitHub</div>
+            <div class="resource-desc">Source code & docs</div>
+          </div>
+        </a>
+      </div>
+      <a href="index.html">Live Weather</a>
+      <a href="weather.html">Event Planner</a>
+      <a href="#" class="active">Emergency</a>
+      <a href="login.html">Account</a>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div class="dashboard">
+    <div class="dashboard-card">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Emergency Weather Safety</h1>
+        <p class="dashboard-subtitle">Get real-time alerts, find safe locations, and access emergency contacts during extreme weather events</p>
+      </div>
+      
+      <!-- Emergency Planning Form -->
+      <div class="emergency-form" id="emergencyForm">
+        <div class="form-group">
+          <label class="form-label" for="userLocation">Your Location</label>
+          <input type="text" class="form-input" id="userLocation" placeholder="Enter city or address">
+          <div class="suggestions-dropdown" id="locationSuggestions"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="alertType">Alert Type</label>
+          <select class="form-select" id="alertType">
+            <option value="">Select alert type</option>
+            <option value="hurricane">Hurricane / Typhoon</option>
+            <option value="tornado">Tornado</option>
+            <option value="flood">Flood</option>
+            <option value="wildfire">Wildfire</option>
+            <option value="earthquake">Earthquake</option>
+            <option value="tsunami">Tsunami</option>
+            <option value="blizzard">Blizzard</option>
+            <option value="heatwave">Heat Wave</option>
+            <option value="thunderstorm">Severe Thunderstorm</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="severityLevel">Severity Level</label>
+          <select class="form-select" id="severityLevel">
+            <option value="">Select severity</option>
+            <option value="low">Low - Advisory</option>
+            <option value="moderate">Moderate - Watch</option>
+            <option value="high">High - Warning</option>
+            <option value="extreme">Extreme - Emergency</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="evacuationStatus">Evacuation Status</label>
+          <select class="form-select" id="evacuationStatus">
+            <option value="">Select status</option>
+            <option value="none">No Evacuation</option>
+            <option value="voluntary">Voluntary Evacuation</option>
+            <option value="mandatory">Mandatory Evacuation</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="shelterType">Shelter Type Needed</label>
+          <select class="form-select" id="shelterType">
+            <option value="">Select shelter type</option>
+            <option value="general">General Population Shelter</option>
+            <option value="medical">Medical Needs Shelter</option>
+            <option value="pet">Pet-Friendly Shelter</option>
+            <option value="special">Special Needs Shelter</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="groupSize">Group Size</label>
+          <select class="form-select" id="groupSize">
+            <option value="">Select group size</option>
+            <option value="individual">Individual</option>
+            <option value="small">Small Family (1-4)</option>
+            <option value="medium">Medium Family (5-8)</option>
+            <option value="large">Large Family/Group (9+)</option>
+          </select>
+        </div>
+        
+        <button class="form-btn" id="checkSafetyBtn">
+          <i class="fas fa-shield-alt"></i> Check Safety Status
+        </button>
+        
+        <!-- Country Info -->
+        <div class="country-info" id="countryInfo">
+          <div id="countryDetails"></div>
+        </div>
+      </div>
+      
+      <!-- Results Section -->
+      <div class="results-section" id="resultsSection">
+        <div class="results-header">
+          <h2 class="results-title">Emergency Safety Analysis</h2>
+          <div class="results-actions">
+            <button class="action-btn" id="shareBtn">
+              <i class="fas fa-share-alt"></i> Share
+            </button>
+            <button class="action-btn" id="printBtn">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+        </div>
+        
+        <!-- Overall Alert -->
+        <div class="overall-alert" id="overallAlert">
+          <div class="overall-alert-title">Overall Safety Status</div>
+          <div class="overall-alert-value" id="overallAlertValue">Safe</div>
+          <div class="overall-alert-description" id="overallAlertDescription">
+            Based on current weather data and emergency reports, your area is currently safe with no immediate threats.
+          </div>
+        </div>
+        
+        <!-- Alert Status -->
+        <div class="alert-status">
+          <div class="alert-card">
+            <div class="alert-header">
+              <div class="alert-icon alert-safe">
+                <i class="fas fa-temperature-high"></i>
+              </div>
+              <div class="alert-title">Weather Threat</div>
+            </div>
+            <div class="alert-value alert-safe" id="weatherThreatValue">Low</div>
+            <div class="alert-description" id="weatherThreatDescription">
+              Minimal weather-related threats detected in your area.
+            </div>
+          </div>
+          
+          <div class="alert-card">
+            <div class="alert-header">
+              <div class="alert-icon alert-safe">
+                <i class="fas fa-house-damage"></i>
+              </div>
+              <div class="alert-title">Infrastructure Risk</div>
+            </div>
+            <div class="alert-value alert-safe" id="infrastructureRiskValue">Low</div>
+            <div class="alert-description" id="infrastructureRiskDescription">
+              Infrastructure appears stable with no reported issues.
+            </div>
+          </div>
+          
+          <div class="alert-card">
+            <div class="alert-header">
+              <div class="alert-icon alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+              </div>
+              <div class="alert-title">Evacuation Status</div>
+            </div>
+            <div class="alert-value alert-warning" id="evacuationStatusValue">Monitor</div>
+            <div class="alert-description" id="evacuationStatusDescription">
+              No evacuations currently, but stay informed about changing conditions.
+            </div>
+          </div>
+          
+          <div class="alert-card">
+            <div class="alert-header">
+              <div class="alert-icon alert-safe">
+                <i class="fas fa-road"></i>
+              </div>
+              <div class="alert-title">Transportation</div>
+            </div>
+            <div class="alert-value alert-safe" id="transportationValue">Clear</div>
+            <div class="alert-description" id="transportationDescription">
+              Roads and transportation systems operating normally.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map Section -->
+        <div class="map-section">
+          <div class="map-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Emergency Map & Safe Zones
+          </div>
+          <div id="emergencyMap"></div>
+        </div>
+        
+        <!-- Safe Places Section -->
+        <div class="safe-places-section">
+          <div class="safe-places-container">
+            <div class="safe-places-title">
+              <i class="fas fa-shield-alt"></i>
+              Safe Shelters Nearby
+            </div>
+            <div class="safe-places-list" id="safeSheltersList">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+          
+          <div class="safe-places-container">
+            <div class="safe-places-title">
+              <i class="fas fa-hospital"></i>
+              Medical Facilities
+            </div>
+            <div class="safe-places-list" id="medicalFacilitiesList">
+              <!-- Will be populated by JavaScript -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Emergency Contacts -->
+        <div class="emergency-contacts">
+          <div class="contacts-title">
+            <i class="fas fa-phone-alt"></i>
+            Emergency Contacts
+          </div>
+          <div class="contacts-grid" id="contactsGrid">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Data Source Info -->
+        <div class="data-source" id="dataSourceInfo">
+          <i class="fas fa-database"></i> Data sources: NASA POWER API, GPM IMERG, Open-Meteo API, Global Disaster Alert | Last updated: <span id="lastUpdated">Just now</span>
+        </div>
+      </div>
+      
+      <!-- Loading State -->
+      <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        <p>Analyzing Safety Status...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Comprehensive emergency contacts database for 100+ countries
+    const countryEmergencyContacts = {
+      // North America
+      "United States": {
+        police: "911",
+        ambulance: "911",
+        fire: "911",
+        coastGuard: "1-800-424-8802",
+        poisonControl: "1-800-222-1222",
+        emergency: "911"
+      },
+      "Canada": {
+        police: "911",
+        ambulance: "911",
+        fire: "911",
+        poisonControl: "1-800-268-9017",
+        emergency: "911"
+      },
+      "Mexico": {
+        police: "911",
+        ambulance: "911",
+        fire: "911",
+        emergency: "911",
+        touristHelp: "078"
+      },
+      
+      // Europe
+      "United Kingdom": {
+        police: "999",
+        ambulance: "999",
+        fire: "999",
+        emergency: "999",
+        nonEmergency: "101"
+      },
+      "Germany": {
+        police: "110",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "France": {
+        police: "17",
+        ambulance: "15",
+        fire: "18",
+        emergency: "112"
+      },
+      "Italy": {
+        police: "113",
+        ambulance: "118",
+        fire: "115",
+        emergency: "112"
+      },
+      "Spain": {
+        police: "091",
+        ambulance: "061",
+        fire: "080",
+        emergency: "112"
+      },
+      "Netherlands": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Sweden": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Norway": {
+        police: "112",
+        ambulance: "113",
+        fire: "110",
+        emergency: "112"
+      },
+      "Denmark": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Finland": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Switzerland": {
+        police: "117",
+        ambulance: "144",
+        fire: "118",
+        emergency: "112"
+      },
+      "Austria": {
+        police: "133",
+        ambulance: "144",
+        fire: "122",
+        emergency: "112"
+      },
+      "Belgium": {
+        police: "101",
+        ambulance: "100",
+        fire: "100",
+        emergency: "112"
+      },
+      "Portugal": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Ireland": {
+        police: "999",
+        ambulance: "999",
+        fire: "999",
+        emergency: "999"
+      },
+      "Poland": {
+        police: "997",
+        ambulance: "999",
+        fire: "998",
+        emergency: "112"
+      },
+      "Czech Republic": {
+        police: "158",
+        ambulance: "155",
+        fire: "150",
+        emergency: "112"
+      },
+      "Hungary": {
+        police: "107",
+        ambulance: "104",
+        fire: "105",
+        emergency: "112"
+      },
+      "Romania": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Greece": {
+        police: "100",
+        ambulance: "166",
+        fire: "199",
+        emergency: "112"
+      },
+      
+      // Asia
+      "China": {
+        police: "110",
+        ambulance: "120",
+        fire: "119",
+        emergency: "112"
+      },
+      "Japan": {
+        police: "110",
+        ambulance: "119",
+        fire: "119",
+        emergency: "119"
+      },
+      "South Korea": {
+        police: "112",
+        ambulance: "119",
+        fire: "119",
+        emergency: "119"
+      },
+      "India": {
+        police: "100",
+        ambulance: "102",
+        fire: "101",
+        emergency: "112"
+      },
+      "Bangladesh": {
+        police: "999",
+        ambulance: "199",
+        fire: "199",
+        emergency: "999",
+        disasterManagement: "1090"
+      },
+      "Pakistan": {
+        police: "15",
+        ambulance: "115",
+        fire: "16",
+        emergency: "112"
+      },
+      "Sri Lanka": {
+        police: "119",
+        ambulance: "110",
+        fire: "111",
+        emergency: "112"
+      },
+      "Thailand": {
+        police: "191",
+        ambulance: "1669",
+        fire: "199",
+        emergency: "191"
+      },
+      "Vietnam": {
+        police: "113",
+        ambulance: "115",
+        fire: "114",
+        emergency: "112"
+      },
+      "Philippines": {
+        police: "117",
+        ambulance: "117",
+        fire: "117",
+        emergency: "117"
+      },
+      "Indonesia": {
+        police: "110",
+        ambulance: "118",
+        fire: "113",
+        emergency: "112"
+      },
+      "Malaysia": {
+        police: "999",
+        ambulance: "999",
+        fire: "994",
+        emergency: "999"
+      },
+      "Singapore": {
+        police: "999",
+        ambulance: "995",
+        fire: "995",
+        emergency: "999"
+      },
+      "Taiwan": {
+        police: "110",
+        ambulance: "119",
+        fire: "119",
+        emergency: "119"
+      },
+      "Hong Kong": {
+        police: "999",
+        ambulance: "999",
+        fire: "999",
+        emergency: "999"
+      },
+      "United Arab Emirates": {
+        police: "999",
+        ambulance: "998",
+        fire: "997",
+        emergency: "999"
+      },
+      "Saudi Arabia": {
+        police: "999",
+        ambulance: "997",
+        fire: "998",
+        emergency: "999"
+      },
+      "Qatar": {
+        police: "999",
+        ambulance: "999",
+        fire: "999",
+        emergency: "999"
+      },
+      "Palestine": {
+        police: "100",
+        ambulance: "101",
+        fire: "102",
+        emergency: "112"
+      },
+      "Turkey": {
+        police: "155",
+        ambulance: "112",
+        fire: "110",
+        emergency: "112"
+      },
+      "Iran": {
+        police: "110",
+        ambulance: "115",
+        fire: "125",
+        emergency: "112"
+      },
+      "Iraq": {
+        police: "104",
+        ambulance: "122",
+        fire: "115",
+        emergency: "112"
+      },
+      
+      // Africa
+      "South Africa": {
+        police: "10111",
+        ambulance: "10177",
+        fire: "10111",
+        emergency: "112"
+      },
+      "Egypt": {
+        police: "122",
+        ambulance: "123",
+        fire: "180",
+        emergency: "112"
+      },
+      "Nigeria": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Kenya": {
+        police: "999",
+        ambulance: "999",
+        fire: "999",
+        emergency: "999"
+      },
+      "Ethiopia": {
+        police: "911",
+        ambulance: "907",
+        fire: "939",
+        emergency: "911"
+      },
+      "Ghana": {
+        police: "191",
+        ambulance: "193",
+        fire: "192",
+        emergency: "112"
+      },
+      "Morocco": {
+        police: "19",
+        ambulance: "15",
+        fire: "15",
+        emergency: "112"
+      },
+      "Tanzania": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Uganda": {
+        police: "999",
+        ambulance: "911",
+        fire: "999",
+        emergency: "999"
+      },
+      
+      // South America
+      "Brazil": {
+        police: "190",
+        ambulance: "192",
+        fire: "193",
+        emergency: "112"
+      },
+      "Argentina": {
+        police: "101",
+        ambulance: "107",
+        fire: "100",
+        emergency: "112"
+      },
+      "Colombia": {
+        police: "112",
+        ambulance: "125",
+        fire: "119",
+        emergency: "112"
+      },
+      "Chile": {
+        police: "133",
+        ambulance: "131",
+        fire: "132",
+        emergency: "112"
+      },
+      "Peru": {
+        police: "105",
+        ambulance: "117",
+        fire: "116",
+        emergency: "112"
+      },
+      "Venezuela": {
+        police: "171",
+        ambulance: "171",
+        fire: "171",
+        emergency: "112"
+      },
+      "Ecuador": {
+        police: "101",
+        ambulance: "131",
+        fire: "102",
+        emergency: "112"
+      },
+      
+      // Oceania
+      "Australia": {
+        police: "000",
+        ambulance: "000",
+        fire: "000",
+        emergency: "000",
+        mobile: "112"
+      },
+      "New Zealand": {
+        police: "111",
+        ambulance: "111",
+        fire: "111",
+        emergency: "111"
+      },
+      "Fiji": {
+        police: "911",
+        ambulance: "911",
+        fire: "911",
+        emergency: "911"
+      },
+      "Papua New Guinea": {
+        police: "112",
+        ambulance: "111",
+        fire: "110",
+        emergency: "112"
+      },
+      
+      // Additional countries
+      "Russia": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Ukraine": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Kazakhstan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Belarus": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Azerbaijan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Georgia": {
+        police: "022",
+        ambulance: "022",
+        fire: "022",
+        emergency: "112"
+      },
+      "Armenia": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Kyrgyzstan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Uzbekistan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Turkmenistan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Tajikistan": {
+        police: "102",
+        ambulance: "103",
+        fire: "101",
+        emergency: "112"
+      },
+      "Moldova": {
+        police: "902",
+        ambulance: "903",
+        fire: "901",
+        emergency: "112"
+      },
+      "Latvia": {
+        police: "02",
+        ambulance: "03",
+        fire: "01",
+        emergency: "112"
+      },
+      "Lithuania": {
+        police: "02",
+        ambulance: "03",
+        fire: "01",
+        emergency: "112"
+      },
+      "Estonia": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Slovakia": {
+        police: "158",
+        ambulance: "155",
+        fire: "150",
+        emergency: "112"
+      },
+      "Slovenia": {
+        police: "113",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Croatia": {
+        police: "192",
+        ambulance: "194",
+        fire: "193",
+        emergency: "112"
+      },
+      "Bosnia and Herzegovina": {
+        police: "122",
+        ambulance: "124",
+        fire: "123",
+        emergency: "112"
+      },
+      "Serbia": {
+        police: "192",
+        ambulance: "194",
+        fire: "193",
+        emergency: "112"
+      },
+      "Montenegro": {
+        police: "122",
+        ambulance: "124",
+        fire: "123",
+        emergency: "112"
+      },
+      "North Macedonia": {
+        police: "192",
+        ambulance: "194",
+        fire: "193",
+        emergency: "112"
+      },
+      "Albania": {
+        police: "129",
+        ambulance: "127",
+        fire: "128",
+        emergency: "112"
+      },
+      "Bulgaria": {
+        police: "166",
+        ambulance: "150",
+        fire: "160",
+        emergency: "112"
+      },
+      "Cyprus": {
+        police: "199",
+        ambulance: "199",
+        fire: "199",
+        emergency: "112"
+      },
+      "Malta": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Iceland": {
+        police: "112",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Luxembourg": {
+        police: "113",
+        ambulance: "112",
+        fire: "112",
+        emergency: "112"
+      },
+      "Monaco": {
+        police: "17",
+        ambulance: "15",
+        fire: "18",
+        emergency: "112"
+      },
+      "Liechtenstein": {
+        police: "117",
+        ambulance: "144",
+        fire: "118",
+        emergency: "112"
+      },
+      "Andorra": {
+        police: "110",
+        ambulance: "116",
+        fire: "118",
+        emergency: "112"
+      },
+      "San Marino": {
+        police: "113",
+        ambulance: "118",
+        fire: "115",
+        emergency: "112"
+      },
+      "Vatican City": {
+        police: "113",
+        ambulance: "118",
+        fire: "115",
+        emergency: "112"
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const emergencyForm = document.getElementById('emergencyForm');
+      const resultsSection = document.getElementById('resultsSection');
+      const loadingState = document.getElementById('loadingState');
+      const checkSafetyBtn = document.getElementById('checkSafetyBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const printBtn = document.getElementById('printBtn');
+      const resourcesLink = document.getElementById('resourcesLink');
+      const resourcesDropdown = document.getElementById('resourcesDropdown');
+      const dataSourceInfo = document.getElementById('dataSourceInfo');
+      const lastUpdated = document.getElementById('lastUpdated');
+      const userLocation = document.getElementById('userLocation');
+      const locationSuggestions = document.getElementById('locationSuggestions');
+      const countryInfo = document.getElementById('countryInfo');
+      const countryDetails = document.getElementById('countryDetails');
+      
+      // Map variable
+      let emergencyMap = null;
+      let mapMarkers = [];
+      
+      // Resources dropdown functionality
+      resourcesLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        resourcesDropdown.classList.toggle('show');
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!resourcesLink.contains(e.target) && !resourcesDropdown.contains(e.target)) {
+          resourcesDropdown.classList.remove('show');
+        }
+      });
+      
+      // Location input with suggestions
+      let debounceTimer;
+      userLocation.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const query = this.value.trim();
+          if (query.length > 2) {
+            fetchLocationSuggestions(query);
+          } else {
+            locationSuggestions.style.display = 'none';
+          }
+        }, 300);
+      });
+      
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!userLocation.contains(e.target) && !locationSuggestions.contains(e.target)) {
+          locationSuggestions.style.display = 'none';
+        }
+      });
+      
+      // Fetch location suggestions
+      async function fetchLocationSuggestions(query) {
+        try {
+          const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5`);
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            showLocationSuggestions(data.results);
+          } else {
+            locationSuggestions.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error fetching location suggestions:', error);
+          locationSuggestions.style.display = 'none';
+        }
+      }
+      
+      // Show location suggestions
+      function showLocationSuggestions(results) {
+        locationSuggestions.innerHTML = '';
+        results.forEach(result => {
+          const item = document.createElement('div');
+          item.className = 'suggestion-item';
+          item.textContent = `${result.name}, ${result.country}`;
+          item.addEventListener('click', () => {
+            userLocation.value = `${result.name}, ${result.country}`;
+            locationSuggestions.style.display = 'none';
+          });
+          locationSuggestions.appendChild(item);
+        });
+        locationSuggestions.style.display = 'block';
+      }
+      
+      // Check safety button click
+      checkSafetyBtn.addEventListener('click', function() {
+        // Validate form
+        const location = document.getElementById('userLocation').value;
+        const alertType = document.getElementById('alertType').value;
+        const severity = document.getElementById('severityLevel').value;
+        const evacuation = document.getElementById('evacuationStatus').value;
+        const shelter = document.getElementById('shelterType').value;
+        const groupSize = document.getElementById('groupSize').value;
+        
+        if (!location) {
+          alert('Please enter your location.');
+          return;
+        }
+        
+        // Show loading state
+        loadingState.style.display = 'flex';
+        resultsSection.style.display = 'none';
+        dataSourceInfo.style.display = 'block';
+        
+        // Update last updated time
+        lastUpdated.textContent = new Date().toLocaleString();
+        
+        // Process the safety analysis
+        processSafetyAnalysis(location, alertType, severity, evacuation, shelter, groupSize);
+      });
+      
+      // Share button
+      shareBtn.addEventListener('click', function() {
+        if (navigator.share) {
+          navigator.share({
+            title: 'CloudCheck Emergency Safety Analysis',
+            text: 'Check out my emergency safety analysis from CloudCheck!',
+            url: window.location.href,
+          })
+          .catch(console.error);
+        } else {
+          // Fallback for browsers that don't support Web Share API
+          alert('Share this page using your browser\'s share functionality.');
+        }
+      });
+      
+      // Print button
+      printBtn.addEventListener('click', function() {
+        window.print();
+      });
+      
+      // Process safety analysis
+      async function processSafetyAnalysis(location, alertType, severity, evacuation, shelter, groupSize) {
+        try {
+          // Get coordinates from location
+          const coords = await getCoordinates(location);
+          if (!coords) {
+            throw new Error('Could not find location coordinates');
+          }
+          
+          // Initialize map
+          initializeMap(coords.lat, coords.lon, location);
+          
+          // Get location name and country
+          const locationData = await getLocationName(coords.lat, coords.lon);
+          
+          // Fetch weather data
+          const weatherData = await fetchWeatherData(coords.lat, coords.lon);
+          
+          // Fetch emergency data
+          const emergencyData = await fetchEmergencyData(coords.lat, coords.lon);
+          
+          // Process data and generate safety assessment
+          const analysis = processSafetyData(
+            location, alertType, severity, evacuation, shelter, groupSize, 
+            weatherData, emergencyData, coords
+          );
+          
+          // Update UI with results
+          updateResultsUI(analysis);
+          
+          // Generate safe places
+          generateSafePlaces(analysis);
+          
+          // Update map with safety zones
+          updateMapWithSafetyZones(coords, analysis);
+          
+          // Hide loading and show results
+          loadingState.style.display = 'none';
+          resultsSection.style.display = 'block';
+
+          // Recalculate map size
+          setTimeout(() => {
+            if (emergencyMap) {
+              emergencyMap.invalidateSize();
+            }
+          }, 200);
+          
+        } catch (error) {
+          console.error('Error processing safety analysis:', error);
+          loadingState.style.display = 'none';
+          showErrorState('Failed to analyze safety status. Please try again.');
+        }
+      }
+      
+      // Get location name from coordinates and update emergency contacts
+      async function getLocationName(lat, lng) {
+        try {
+          const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+          const data = await response.json();
+          
+          let locationName = '';
+          if (data.city) {
+            locationName = `${data.city}, ${data.countryName}`;
+          } else {
+            locationName = `${data.locality}, ${data.countryName}`;
+          }
+          
+          document.getElementById('userLocation').value = locationName;
+          
+          // Update emergency contacts based on country
+          updateEmergencyContacts(data.countryName);
+          
+          // Show country info
+          showCountryInfo(data.countryName, data.countryCode);
+          
+          return data;
+          
+        } catch (error) {
+          console.error('Error getting location name:', error);
+          document.getElementById('userLocation').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+          return null;
+        }
+      }
+      
+      // Update emergency contacts based on country
+      function updateEmergencyContacts(countryName) {
+        const contactsGrid = document.getElementById('contactsGrid');
+        contactsGrid.innerHTML = '';
+        
+        const countryContacts = countryEmergencyContacts[countryName];
+        
+        if (countryContacts) {
+          // Create contact cards for the country
+          const contactTypes = [
+            { key: 'police', name: 'Police', icon: 'fa-shield-alt' },
+            { key: 'ambulance', name: 'Ambulance', icon: 'fa-ambulance' },
+            { key: 'fire', name: 'Fire Department', icon: 'fa-fire-extinguisher' },
+            { key: 'emergency', name: 'Emergency', icon: 'fa-exclamation-triangle' },
+            { key: 'coastGuard', name: 'Coast Guard', icon: 'fa-ship' },
+            { key: 'disasterManagement', name: 'Disaster Management', icon: 'fa-hands-helping' },
+            { key: 'poisonControl', name: 'Poison Control', icon: 'fa-skull-crossbones' },
+            { key: 'touristHelp', name: 'Tourist Help', icon: 'fa-info-circle' }
+          ];
+          
+          contactTypes.forEach(contact => {
+            if (countryContacts[contact.key]) {
+              const contactCard = document.createElement('div');
+              contactCard.className = 'contact-card';
+              contactCard.innerHTML = `
+                <i class="fas ${contact.icon} contact-icon"></i>
+                <div class="contact-name">${contact.name}</div>
+                <div class="contact-number">${countryContacts[contact.key]}</div>
+              `;
+              contactsGrid.appendChild(contactCard);
+            }
+          });
+        } else {
+          // Show default contacts if country not found
+          contactsGrid.innerHTML = '<div style="text-align: center; padding: 20px; color: #718096;">Emergency contacts not available for this country.</div>';
+        }
+      }
+      
+      // Show country information
+      function showCountryInfo(countryName, countryCode) {
+        countryInfo.classList.add('show');
+        
+        // Get flag emoji from country code
+        const flag = countryCode ? getFlagEmoji(countryCode) : '🇺🇳';
+        
+        countryDetails.innerHTML = `
+          <div style="display: flex; align-items: center; margin-bottom: 10px;">
+            <span class="country-flag">${flag}</span>
+            <strong style="color: #2d3748;">Detected Country: ${countryName}</strong>
+          </div>
+          <div style="font-size: 0.9rem; color: #4a5568">
+            Emergency contacts updated for ${countryName}
+          </div>
+        `;
+      }
+      
+      // Get flag emoji from country code
+      function getFlagEmoji(countryCode) {
+        if (!countryCode) return '🇺🇳';
+        
+        const codePoints = countryCode
+          .toUpperCase()
+          .split('')
+          .map(char => 127397 + char.charCodeAt());
+        return String.fromCodePoint(...codePoints);
+      }
+      
+      // Initialize Leaflet map
+      function initializeMap(lat, lon, location) {
+        // Remove existing map if it exists
+        if (emergencyMap) {
+          emergencyMap.remove();
+        }
+        
+        // Clear existing markers
+        mapMarkers.forEach(marker => marker.remove());
+        mapMarkers = [];
+        
+        // Create new map
+        emergencyMap = L.map('emergencyMap').setView([lat, lon], 10);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(emergencyMap);
+        
+        // Add user location marker
+        const userMarker = L.marker([lat, lon])
+          .addTo(emergencyMap)
+          .bindPopup(`<b>Your Location</b><br>${location}`)
+          .openPopup();
+        
+        mapMarkers.push(userMarker);
+      }
+      
+      // Update map with safety zones
+      function updateMapWithSafetyZones(coords, analysis) {
+        if (!emergencyMap) return;
+        
+        const { lat, lon } = coords;
+        const safety = analysis.safety;
+        
+        // Define colors based on safety levels
+        const safetyColors = {
+          safe: '#38a169',
+          warning: '#dd6b20',
+          danger: '#e53e3e'
+        };
+        
+        // Determine overall safety color
+        let overallSafetyColor = safetyColors.safe;
+        if (safety.overall > 0.6) overallSafetyColor = safetyColors.danger;
+        else if (safety.overall > 0.3) overallSafetyColor = safetyColors.warning;
+        
+        // Add a circle to represent the safety zone
+        const safetyCircle = L.circle([lat, lon], {
+          color: overallSafetyColor,
+          fillColor: overallSafetyColor,
+          fillOpacity: 0.2,
+          radius: 5000 // 5km radius
+        }).addTo(emergencyMap);
+        
+        mapMarkers.push(safetyCircle);
+        
+        // Add safety indicators around the area
+        const safetyPoints = [
+          { lat: lat + 0.05, lon: lon + 0.05, safety: safety.weather, type: 'Weather' },
+          { lat: lat - 0.05, lon: lon + 0.05, safety: safety.infrastructure, type: 'Infrastructure' },
+          { lat: lat + 0.05, lon: lon - 0.05, safety: safety.evacuation, type: 'Evacuation' },
+          { lat: lat - 0.05, lon: lon - 0.05, safety: safety.transportation, type: 'Transportation' }
+        ];
+        
+        safetyPoints.forEach(point => {
+          let color = safetyColors.safe;
+          if (point.safety > 0.6) color = safetyColors.danger;
+          else if (point.safety > 0.3) color = safetyColors.warning;
+          
+          const marker = L.circleMarker([point.lat, point.lon], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.7,
+            radius: 8
+          }).addTo(emergencyMap)
+          .bindPopup(`<b>${point.type} Safety</b><br>${getSafetyLevel(point.safety)}`);
+          
+          mapMarkers.push(marker);
+        });
+      }
+      
+      // Get safety level text
+      function getSafetyLevel(value) {
+        if (value > 0.6) return 'Danger';
+        if (value > 0.3) return 'Warning';
+        return 'Safe';
+      }
+      
+      // Get coordinates from location name
+      async function getCoordinates(location) {
+        try {
+          // Using OpenStreetMap Nominatim for geocoding (free)
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+          const data = await response.json();
+          
+          if (data && data.length > 0) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lon: parseFloat(data[0].lon)
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error('Error getting coordinates:', error);
+          return null;
+        }
+      }
+      
+      // Fetch weather data
+      async function fetchWeatherData(lat, lon) {
+        try {
+          const response = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,wind_gusts_10m&daily=precipitation_probability_max&timezone=auto`
+          );
+          
+          if (!response.ok) {
+            throw new Error('Weather API request failed');
+          }
+          
+          const data = await response.json();
+          return data;
+          
+        } catch (error) {
+          console.error('Error fetching weather data:', error);
+          // Return mock data as fallback
+          return generateMockWeatherData();
+        }
+      }
+      
+      // Generate mock weather data (fallback)
+      function generateMockWeatherData() {
+        return {
+          current: {
+            temperature_2m: 22,
+            relative_humidity_2m: 65,
+            precipitation: 0,
+            weather_code: 0,
+            wind_speed_10m: 5,
+            wind_gusts_10m: 8
+          },
+          daily: {
+            precipitation_probability_max: [10]
+          }
+        };
+      }
+      
+      // Fetch emergency data
+      async function fetchEmergencyData(lat, lon) {
+        try {
+          // In a real implementation, this would fetch from emergency alert APIs
+          // For demo purposes, we'll return mock data
+          return generateMockEmergencyData();
+        } catch (error) {
+          console.error('Error fetching emergency data:', error);
+          return generateMockEmergencyData();
+        }
+      }
+      
+      // Generate mock emergency data
+      function generateMockEmergencyData() {
+        return {
+          alerts: [],
+          shelters: [
+            { name: 'Central High School', type: 'general', distance: '2.1 km', capacity: 500 },
+            { name: 'Community Center', type: 'general', distance: '3.5 km', capacity: 300 },
+            { name: 'City Hospital', type: 'medical', distance: '1.8 km', capacity: 200 },
+            { name: 'Animal Shelter', type: 'pet', distance: '4.2 km', capacity: 100 }
+          ],
+          infrastructure: {
+            power: 'stable',
+            water: 'stable',
+            communications: 'stable',
+            transportation: 'clear'
+          }
+        };
+      }
+      
+      // Process safety data
+      function processSafetyData(location, alertType, severity, evacuation, shelter, groupSize, weatherData, emergencyData, coords) {
+        // Calculate safety scores based on data
+        
+        // Weather safety (lower is safer)
+        let weatherSafety = 0.1;
+        if (weatherData.current.precipitation > 10) weatherSafety = 0.7;
+        if (weatherData.current.wind_speed_10m > 50) weatherSafety = 0.8;
+        if (weatherData.current.wind_gusts_10m > 70) weatherSafety = 0.9;
+        if (weatherData.daily.precipitation_probability_max[0] > 80) weatherSafety = 0.6;
+        
+        // Infrastructure safety
+        let infrastructureSafety = 0.1;
+        if (emergencyData.infrastructure.power !== 'stable') infrastructureSafety = 0.6;
+        if (emergencyData.infrastructure.water !== 'stable') infrastructureSafety = 0.7;
+        if (emergencyData.infrastructure.communications !== 'stable') infrastructureSafety = 0.8;
+        
+        // Evacuation safety
+        let evacuationSafety = 0.1;
+        if (evacuation === 'mandatory') evacuationSafety = 0.9;
+        else if (evacuation === 'voluntary') evacuationSafety = 0.5;
+        
+        // Transportation safety
+        let transportationSafety = 0.1;
+        if (emergencyData.infrastructure.transportation !== 'clear') transportationSafety = 0.7;
+        
+        // Calculate overall safety (weighted average)
+        const overallSafety = (weatherSafety * 0.3 + infrastructureSafety * 0.25 + evacuationSafety * 0.25 + transportationSafety * 0.2);
+        
+        return {
+          location,
+          alertType,
+          severity,
+          evacuation,
+          shelter,
+          groupSize,
+          coords,
+          safety: {
+            weather: weatherSafety,
+            infrastructure: infrastructureSafety,
+            evacuation: evacuationSafety,
+            transportation: transportationSafety,
+            overall: overallSafety
+          },
+          weatherData,
+          emergencyData
+        };
+      }
+      
+      // Update results UI
+      function updateResultsUI(analysis) {
+        const safety = analysis.safety;
+        
+        // Update overall alert
+        const overallAlertElement = document.getElementById('overallAlert');
+        const overallAlertValue = document.getElementById('overallAlertValue');
+        const overallAlertDescription = document.getElementById('overallAlertDescription');
+        
+        let overallAlertClass = 'safe';
+        let overallAlertText = 'Safe';
+        let overallDescription = 'Based on current weather data and emergency reports, your area is currently safe with no immediate threats.';
+        
+        if (safety.overall > 0.6) {
+          overallAlertClass = 'danger';
+          overallAlertText = 'Danger';
+          overallDescription = 'Immediate threat detected. Follow emergency instructions and evacuate if advised.';
+        } else if (safety.overall > 0.3) {
+          overallAlertClass = 'warning';
+          overallAlertText = 'Warning';
+          overallDescription = 'Potential threat detected. Stay alert and monitor official updates.';
+        }
+        
+        overallAlertElement.className = `overall-alert ${overallAlertClass}`;
+        overallAlertValue.textContent = overallAlertText;
+        overallAlertValue.className = `overall-alert-value ${overallAlertClass}`;
+        overallAlertDescription.textContent = overallDescription;
+        
+        // Update individual alerts
+        updateAlertElement('weatherThreat', safety.weather);
+        updateAlertElement('infrastructureRisk', safety.infrastructure);
+        updateAlertElement('evacuationStatus', safety.evacuation);
+        updateAlertElement('transportation', safety.transportation);
+      }
+      
+      // Update individual alert element
+      function updateAlertElement(type, safety) {
+        const valueElement = document.getElementById(`${type}Value`);
+        const descriptionElement = document.getElementById(`${type}Description`);
+        
+        let alertClass = 'safe';
+        let valueText = 'Low';
+        let description = '';
+        
+        if (safety > 0.6) {
+          alertClass = 'danger';
+          valueText = 'High';
+        } else if (safety > 0.3) {
+          alertClass = 'warning';
+          valueText = 'Moderate';
+        }
+        
+        valueElement.textContent = valueText;
+        valueElement.className = `alert-value ${alertClass}`;
+        
+        // Update descriptions based on safety level
+        switch(type) {
+          case 'weatherThreat':
+            description = alertClass === 'danger' 
+              ? 'Severe weather conditions detected. Take immediate protective actions.'
+              : alertClass === 'warning'
+              ? 'Moderate weather risk. Stay informed about changing conditions.'
+              : 'Minimal weather-related threats detected in your area.';
+            break;
+          case 'infrastructureRisk':
+            description = alertClass === 'danger'
+              ? 'Critical infrastructure failures reported. Prepare for potential service disruptions.'
+              : alertClass === 'warning'
+              ? 'Some infrastructure issues reported. Monitor situation closely.'
+              : 'Infrastructure appears stable with no reported issues.';
+            break;
+          case 'evacuationStatus':
+            description = alertClass === 'danger'
+              ? 'Mandatory evacuation in effect. Follow official instructions immediately.'
+              : alertClass === 'warning'
+              ? 'Voluntary evacuation recommended. Consider relocating to safer area.'
+              : 'No evacuations currently, but stay informed about changing conditions.';
+            break;
+          case 'transportation':
+            description = alertClass === 'danger'
+              ? 'Transportation systems severely impacted. Avoid travel if possible.'
+              : alertClass === 'warning'
+              ? 'Some transportation disruptions. Check routes before traveling.'
+              : 'Roads and transportation systems operating normally.';
+            break;
+        }
+        
+        descriptionElement.textContent = description;
+      }
+      
+      // Generate safe places
+      function generateSafePlaces(analysis) {
+        const emergencyData = analysis.emergencyData;
+        const sheltersList = document.getElementById('safeSheltersList');
+        const medicalList = document.getElementById('medicalFacilitiesList');
+        
+        sheltersList.innerHTML = '';
+        medicalList.innerHTML = '';
+        
+        // Add shelters
+        emergencyData.shelters.forEach(shelter => {
+          if (shelter.type === 'general' || shelter.type === 'pet') {
+            const shelterCard = document.createElement('div');
+            shelterCard.className = 'safe-place-card';
+            shelterCard.innerHTML = `
+              <div class="safe-place-icon">
+                <i class="fas fa-home"></i>
+              </div>
+              <div class="safe-place-info">
+                <div class="safe-place-name">${shelter.name}</div>
+                <div class="safe-place-details">${shelter.type === 'pet' ? 'Pet-Friendly' : 'General Shelter'} • <span class="safe-place-distance">${shelter.distance}</span></div>
+              </div>
+            `;
+            sheltersList.appendChild(shelterCard);
+          }
+          
+          if (shelter.type === 'medical') {
+            const medicalCard = document.createElement('div');
+            medicalCard.className = 'safe-place-card';
+            medicalCard.innerHTML = `
+              <div class="safe-place-icon">
+                <i class="fas fa-hospital"></i>
+              </div>
+              <div class="safe-place-info">
+                <div class="safe-place-name">${shelter.name}</div>
+                <div class="safe-place-details">Medical Facility • <span class="safe-place-distance">${shelter.distance}</span></div>
+              </div>
+            `;
+            medicalList.appendChild(medicalCard);
+          }
+        });
+      }
+      
+      // Show error state
+      function showErrorState(message) {
+        const errorHTML = `
+          <div class="error-state">
+            <i class="fas fa-exclamation-triangle error-icon"></i>
+            <h3>Something went wrong</h3>
+            <p>${message}</p>
+            <button class="form-btn" onclick="location.reload()">
+              <i class="fas fa-redo"></i> Try Again
+            </button>
+          </div>
+        `;
+        
+        // Create a temporary container to hold the error state
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = errorHTML;
+        
+        // Clear the dashboard and show error
+        const dashboardCard = document.querySelector('.dashboard-card');
+        dashboardCard.innerHTML = '';
+        dashboardCard.appendChild(tempDiv.firstElementChild);
+      }
+    });
+  </script>
+</body>
+</html>

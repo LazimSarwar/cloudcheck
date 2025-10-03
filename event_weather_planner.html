@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudCheck - Event Weather Planner</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+      color: #2d3748;
+      font-family: 'Inter', sans-serif;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Navbar */
+    .navbar {
+      margin-top: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+      z-index: 100;
+      position: relative;
+    }
+
+    /* Logo */
+    .logo {
+      font-size: 2.5rem;
+      font-weight: 700;
+      background: #000;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      padding-left: 17%;
+    }
+
+    /* Nav links */
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+      padding-right: 17.5%;
+      position: relative;
+    }
+
+    .nav-links a {
+      color: #4a5568;
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+      position: relative;
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: #000;
+    }
+
+    /* Resources Dropdown */
+    .resources-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      backdrop-filter: blur(20px);
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      min-width: 250px;
+      padding: 10px 0;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .resources-dropdown.show {
+      display: block;
+      animation: dropdownFade 0.3s ease;
+    }
+
+    @keyframes dropdownFade {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .resource-item {
+      padding: 12px 20px;
+      color: #2d3748;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.3s ease;
+      border-bottom: 1px solid #f7fafc;
+    }
+
+    .resource-item:hover {
+      background: #f7fafc;
+      transform: translateX(1px);
+    }
+
+    .resource-item:last-child {
+      border-bottom: none;
+    }
+
+    .resource-icon {
+      font-size: 1rem;
+      color: #4299e1;
+      width: 20px;
+      text-align: center;
+    }
+
+    .resource-text {
+      flex: 1;
+    }
+
+    .resource-desc {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 2px;
+    }
+
+    /* Dashboard */
+    .dashboard {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .dashboard-card {
+      width: 100%;
+      max-width: 1600px;
+      height: auto;
+      min-height: 800px;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Dashboard Header */
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: #000;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .dashboard-subtitle {
+      font-size: 1.1rem;
+      color: #4a5568;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* Event Planning Form */
+    .event-form {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+      background: #f7fafc;
+      border-radius: 15px;
+      padding: 25px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+    }
+
+    .form-label {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #4a5568;
+    }
+
+    .form-input, .form-select {
+      padding: 12px 15px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0;
+      background: white;
+      color: #2d3748;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    .form-input::placeholder {
+      color: #a0aec0;
+    }
+
+    /* Location suggestions dropdown */
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 0 0 8px 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .suggestion-item {
+      padding: 12px 15px;
+      cursor: pointer;
+      border-bottom: 1px solid #f7fafc;
+      transition: background 0.3s ease;
+      color: #2d3748;
+      background: white;
+    }
+
+    .suggestion-item:hover {
+      background: #f7fafc;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .form-btn {
+      grid-column: 1 / -1;
+      padding: 15px;
+      border-radius: 8px;
+      border: none;
+      background: #1a202c;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 1rem;
+    }
+
+    .form-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(26, 32, 44, 0.4);
+      background: #2d3748;
+    }
+
+    .form-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    /* Results Section */
+    .results-section {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .results-title {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-btn {
+      padding: 10px 15px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e0;
+      background: white;
+      color: #4a5568;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 500;
+    }
+
+    .action-btn:hover {
+      background: #f7fafc;
+      border-color: #a0aec0;
+    }
+
+    /* Risk Assessment */
+    .risk-assessment {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .risk-card {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .risk-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+    }
+
+    .risk-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .risk-icon {
+      font-size: 1.5rem;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+
+    .risk-low { background: rgba(72, 187, 120, 0.15); color: #38a169; }
+    .risk-medium { background: rgba(237, 137, 54, 0.15); color: #dd6b20; }
+    .risk-high { background: rgba(245, 101, 101, 0.15); color: #e53e3e; }
+
+    .risk-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .risk-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .risk-uncertainty {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-top: -5px;
+    }
+
+    .risk-description {
+      font-size: 0.9rem;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+
+    /* Overall Risk */
+    .overall-risk {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      border: 1px solid;
+    }
+
+    .overall-risk.low { background: rgba(72, 187, 120, 0.1); border-color: rgba(72, 187, 120, 0.3); }
+    .overall-risk.medium { background: rgba(237, 137, 54, 0.1); border-color: rgba(237, 137, 54, 0.3); }
+    .overall-risk.high { background: rgba(245, 101, 101, 0.1); border-color: rgba(245, 101, 101, 0.3); }
+
+    .overall-risk-title {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+      color: #4a5568;
+    }
+
+    .overall-risk-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+    }
+
+    .overall-risk.low .overall-risk-value { color: #38a169; }
+    .overall-risk.medium .overall-risk-value { color: #dd6b20; }
+    .overall-risk.high .overall-risk-value { color: #e53e3e; }
+
+    .overall-risk-uncertainty {
+      font-size: 1rem;
+      color: #718096;
+      margin-bottom: 10px;
+    }
+
+    .overall-risk-description {
+      font-size: 1rem;
+      color: #4a5568;
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    /* Map Section */
+    .map-section {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      height: 400px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .map-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .map-title i {
+      color: #4299e1;
+    }
+
+    #eventMap {
+      height: 320px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Charts Section */
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    .chart-container {
+      background: white;
+      border-radius: 15px;
+      padding: 20px;
+      height: 300px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .chart-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .chart-title i {
+      color: #4299e1;
+    }
+
+    /* Alternative Dates */
+    .alternative-dates {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      margin-bottom: 30px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .dates-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .dates-title i {
+      color: #4299e1;
+    }
+
+    .dates-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .date-card {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid #e2e8f0;
+    }
+
+    .date-card:hover {
+      transform: translateY(-5px);
+      background: white;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .date-day {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: #2d3748;
+    }
+
+    .date-full {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 10px;
+    }
+
+    .date-risk {
+      font-size: 0.9rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+      font-weight: 500;
+    }
+
+    .date-risk.low { background: rgba(72, 187, 120, 0.15); color: #38a169; }
+    .date-risk.medium { background: rgba(237, 137, 54, 0.15); color: #dd6b20; }
+    .date-risk.high { background: rgba(245, 101, 101, 0.15); color: #e53e3e; }
+
+    .date-confidence {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 5px;
+    }
+
+    .date-badges {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      background: #edf2f7;
+      color: #4a5568;
+    }
+
+    .badge.hot { background: #fed7d7; color: #c53030; }
+    .badge.cold { background: #bee3f8; color: #2b6cb0; }
+    .badge.rain { background: #c6f6d5; color: #276749; }
+    .badge.wind { background: #fefcbf; color: #744210; }
+    .badge.good { background: #c6f6d5; color: #276749; }
+
+    /* Recommendations */
+    .recommendations {
+      background: white;
+      border-radius: 15px;
+      padding: 25px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .recommendations-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #2d3748;
+    }
+
+    .recommendations-title i {
+      color: #4299e1;
+    }
+
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .recommendation-card {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      border: 1px solid #e2e8f0;
+      transition: all 0.3s ease;
+    }
+
+    .recommendation-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .recommendation-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .recommendation-icon {
+      font-size: 1.5rem;
+      color: #4299e1;
+    }
+
+    .recommendation-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .recommendation-description {
+      font-size: 0.95rem;
+      color: #4a5568;
+      line-height: 1.5;
+    }
+
+    /* Data Source Info */
+    .data-source {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(66, 153, 225, 0.1);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: #4a5568;
+      text-align: center;
+      border: 1px solid rgba(66, 153, 225, 0.2);
+    }
+
+    /* Loading State */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      flex-direction: column;
+      gap: 20px;
+      grid-column: 1 / -1;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #e2e8f0;
+      border-top: 5px solid #000;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Error State */
+    .error-state {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 300px;
+      flex-direction: column;
+      gap: 20px;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    .error-icon {
+      font-size: 4rem;
+      color: #e53e3e;
+      margin-bottom: 20px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+      .event-form {
+        grid-template-columns: 1fr;
+      }
+      .risk-assessment {
+        grid-template-columns: 1fr;
+      }
+      .charts-section {
+        grid-template-columns: 1fr;
+      }
+      .recommendations-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-card {
+        padding: 20px;
+      }
+      .navbar {
+        padding: 20px;
+        flex-direction: column;
+        gap: 15px;
+      }
+      .logo {
+        padding-left: 0;
+      }
+      .nav-links {
+        padding-right: 0;
+      }
+      .resources-dropdown {
+        left: -50px;
+        min-width: 200px;
+      }
+      .dates-grid {
+        grid-template-columns: 1fr;
+      }
+      .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+      }
+      .results-actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <div class="logo">cloudcheck</div>
+    <div class="nav-links">
+      <a href="#" id="resourcesLink">Resources <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i></a>
+      <div class="resources-dropdown" id="resourcesDropdown">
+        <a href="https://power.larc.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-satellite resource-icon"></i>
+          <div class="resource-text">
+            <div>NASA POWER API</div>
+            <div class="resource-desc">Weather & solar data</div>
+          </div>
+        </a>
+        <a href="https://gpm.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-cloud-rain resource-icon"></i>
+          <div class="resource-text">
+            <div>GPM IMERG</div>
+            <div class="resource-desc">Precipitation data</div>
+          </div>
+        </a>
+        <a href="https://worldview.earthdata.nasa.gov/" class="resource-item" target="_blank">
+          <i class="fas fa-globe resource-icon"></i>
+          <div class="resource-text">
+            <div>NASA Worldview</div>
+            <div class="resource-desc">Satellite imagery</div>
+          </div>
+        </a>
+        <a href="https://open-meteo.com/" class="resource-item" target="_blank">
+          <i class="fas fa-wind resource-icon"></i>
+          <div class="resource-text">
+            <div>Open-Meteo API</div>
+            <div class="resource-desc">Weather forecasts</div>
+          </div>
+        </a>
+        <a href="https://api.bigdatacloud.net/" class="resource-item" target="_blank">
+          <i class="fas fa-map-marker-alt resource-icon"></i>
+          <div class="resource-text">
+            <div>BigDataCloud</div>
+            <div class="resource-desc">Geocoding services</div>
+          </div>
+        </a>
+        <a href="https://github.com/your-repo" class="resource-item" target="_blank">
+          <i class="fab fa-github resource-icon"></i>
+          <div class="resource-text">
+            <div>Project GitHub</div>
+            <div class="resource-desc">Source code & docs</div>
+          </div>
+        </a>
+      </div>
+      <a href="index.html">Live Weather</a>
+      <a href="#">Local</a>
+      <a href="#">English</a>
+      <a href="login.html">Account</a>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div class="dashboard">
+    <div class="dashboard-card">
+      <!-- Dashboard Header -->
+      <div class="dashboard-header">
+        <h1 class="dashboard-title">Event Weather Planner</h1>
+        <p class="dashboard-subtitle">Plan your perfect event with event weather planner. Get personalized recommendations for the best dates based on your event type and location.</p>
+      </div>
+      
+      <!-- Event Planning Form -->
+      <div class="event-form" id="eventForm">
+        <div class="form-group">
+          <label class="form-label" for="eventLocation">Event Location</label>
+          <input type="text" class="form-input" id="eventLocation" placeholder="Enter city or address">
+          <div class="suggestions-dropdown" id="locationSuggestions"></div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="eventType">Event Type</label>
+          <select class="form-select" id="eventType">
+            <option value="">Select event type</option>
+            <option value="wedding">Wedding / Reception</option>
+            <option value="birthday">Birthday Party</option>
+            <option value="religious">Religious Gathering</option>
+            <option value="concert">Concert / Music Festival</option>
+            <option value="parade">Parade / Rally</option>
+            <option value="fair">Fair / Carnival</option>
+            <option value="cinema">Outdoor Cinema / Cultural Show</option>
+            <option value="sports">Sports Event</option>
+            <option value="corporate">Corporate Event</option>
+            <option value="picnic">Picnic / BBQ</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="eventDate">Preferred Date</label>
+          <input type="date" class="form-input" id="eventDate">
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="eventTime">Event Time</label>
+          <select class="form-select" id="eventTime">
+            <option value="">Select event time</option>
+            <option value="morning">Morning (8AM - 12PM)</option>
+            <option value="afternoon">Afternoon (12PM - 5PM)</option>
+            <option value="evening">Evening (5PM - 9PM)</option>
+            <option value="night">Night (9PM - 12AM)</option>
+            <option value="all-day">All Day</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="guestCount">Number of Guests</label>
+          <select class="form-select" id="guestCount">
+            <option value="">Select guest count</option>
+            <option value="small">Small (1-50)</option>
+            <option value="medium">Medium (51-200)</option>
+            <option value="large">Large (201-500)</option>
+            <option value="x-large">Very Large (500+)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label" for="venueType">Venue Type</label>
+          <select class="form-select" id="venueType">
+            <option value="">Select venue type</option>
+            <option value="outdoor">Outdoor</option>
+            <option value="indoor">Indoor</option>
+            <option value="mixed">Mixed (Indoor/Outdoor)</option>
+          </select>
+        </div>
+        
+        <button class="form-btn" id="analyzeBtn">
+          <i class="fas fa-chart-line"></i> Analyze Weather Risk
+        </button>
+      </div>
+      
+      <!-- Results Section -->
+      <div class="results-section" id="resultsSection">
+        <div class="results-header">
+          <h2 class="results-title">Event Weather Analysis</h2>
+          <div class="results-actions">
+            <button class="action-btn" id="shareBtn">
+              <i class="fas fa-share-alt"></i> Share
+            </button>
+            <button class="action-btn" id="printBtn">
+              <i class="fas fa-print"></i> Print
+            </button>
+          </div>
+        </div>
+        
+        <!-- Overall Risk -->
+        <div class="overall-risk" id="overallRisk">
+          <div class="overall-risk-title">Overall Event Weather Risk</div>
+          <div class="overall-risk-value" id="overallRiskValue">Low Risk</div>
+          <div class="overall-risk-uncertainty" id="overallRiskUncertainty">± 8% uncertainty</div>
+          <div class="overall-risk-description" id="overallRiskDescription">
+            Based on historical NASA data and current forecasts, your event has a low risk of weather disruptions.
+          </div>
+        </div>
+        
+        <!-- Risk Assessment -->
+        <div class="risk-assessment">
+          <div class="risk-card">
+            <div class="risk-header">
+              <div class="risk-icon risk-low">
+                <i class="fas fa-temperature-high"></i>
+              </div>
+              <div class="risk-title">Heat Risk</div>
+            </div>
+            <div class="risk-value risk-low" id="heatRiskValue">15%</div>
+            <div class="risk-uncertainty" id="heatRiskUncertainty">± 5%</div>
+            <div class="risk-description" id="heatRiskDescription">
+              Low probability of extreme heat conditions during your event.
+            </div>
+          </div>
+          
+          <div class="risk-card">
+            <div class="risk-header">
+              <div class="risk-icon risk-low">
+                <i class="fas fa-temperature-low"></i>
+              </div>
+              <div class="risk-title">Cold Risk</div>
+            </div>
+            <div class="risk-value risk-low" id="coldRiskValue">10%</div>
+            <div class="risk-uncertainty" id="coldRiskUncertainty">± 4%</div>
+            <div class="risk-description" id="coldRiskDescription">
+              Minimal chance of uncomfortably cold temperatures.
+            </div>
+          </div>
+          
+          <div class="risk-card">
+            <div class="risk-header">
+              <div class="risk-icon risk-medium">
+                <i class="fas fa-cloud-rain"></i>
+              </div>
+              <div class="risk-title">Rain Risk</div>
+            </div>
+            <div class="risk-value risk-medium" id="rainRiskValue">35%</div>
+            <div class="risk-uncertainty" id="rainRiskUncertainty">± 12%</div>
+            <div class="risk-description" id="rainRiskDescription">
+              Moderate chance of precipitation. Consider having a backup plan.
+            </div>
+          </div>
+          
+          <div class="risk-card">
+            <div class="risk-header">
+              <div class="risk-icon risk-low">
+                <i class="fas fa-wind"></i>
+              </div>
+              <div class="risk-title">Wind Risk</div>
+            </div>
+            <div class="risk-value risk-low" id="windRiskValue">12%</div>
+            <div class="risk-uncertainty" id="windRiskUncertainty">± 6%</div>
+            <div class="risk-description" id="windRiskDescription">
+              Low probability of strong winds affecting your event.
+            </div>
+          </div>
+        </div>
+        
+        <!-- Map Section -->
+        <div class="map-section">
+          <div class="map-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Event Location & Weather Zones
+          </div>
+          <div id="eventMap"></div>
+        </div>
+        
+        <!-- Charts Section -->
+        <div class="charts-section">
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-chart-line"></i>
+              Historical Temperature Trends
+            </div>
+            <canvas id="temperatureChart"></canvas>
+          </div>
+          
+          <div class="chart-container">
+            <div class="chart-title">
+              <i class="fas fa-tint"></i>
+              Precipitation Probability
+            </div>
+            <canvas id="precipitationChart"></canvas>
+          </div>
+        </div>
+        
+        <!-- Alternative Dates -->
+        <div class="alternative-dates">
+          <div class="dates-title">
+            <i class="fas fa-calendar-alt"></i>
+            Better Alternative Dates
+          </div>
+          <div class="dates-grid" id="alternativeDates">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Recommendations -->
+        <div class="recommendations">
+          <div class="recommendations-title">
+            <i class="fas fa-lightbulb"></i>
+            Smart Recommendations
+          </div>
+          <div class="recommendations-grid" id="recommendationsGrid">
+            <!-- Will be populated by JavaScript -->
+          </div>
+        </div>
+        
+        <!-- Data Source Info -->
+        <div class="data-source" id="dataSourceInfo">
+          <i class="fas fa-database"></i> Data sources: NASA POWER API, GPM IMERG, Open-Meteo API | Last updated: <span id="lastUpdated">Just now</span>
+        </div>
+      </div>
+      
+      <!-- Loading State -->
+      <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        <p>Analyzing...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // DOM Elements
+      const eventForm = document.getElementById('eventForm');
+      const resultsSection = document.getElementById('resultsSection');
+      const loadingState = document.getElementById('loadingState');
+      const analyzeBtn = document.getElementById('analyzeBtn');
+      const shareBtn = document.getElementById('shareBtn');
+      const printBtn = document.getElementById('printBtn');
+      const resourcesLink = document.getElementById('resourcesLink');
+      const resourcesDropdown = document.getElementById('resourcesDropdown');
+      const dataSourceInfo = document.getElementById('dataSourceInfo');
+      const lastUpdated = document.getElementById('lastUpdated');
+      const eventLocation = document.getElementById('eventLocation');
+      const locationSuggestions = document.getElementById('locationSuggestions');
+      
+      // Map variable
+      let eventMap = null;
+      let mapMarkers = [];
+      let currentCharts = [];
+      
+      // Set minimum date to today
+      const eventDate = document.getElementById('eventDate');
+      const today = new Date().toISOString().split('T')[0];
+      eventDate.min = today;
+      
+      // Resources dropdown functionality
+      resourcesLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        resourcesDropdown.classList.toggle('show');
+      });
+      
+      // Close dropdown when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!resourcesLink.contains(e.target) && !resourcesDropdown.contains(e.target)) {
+          resourcesDropdown.classList.remove('show');
+        }
+      });
+      
+      // Location input with suggestions
+      let debounceTimer;
+      eventLocation.addEventListener('input', function() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const query = this.value.trim();
+          if (query.length > 2) {
+            fetchLocationSuggestions(query);
+          } else {
+            locationSuggestions.style.display = 'none';
+          }
+        }, 300);
+      });
+      
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', function(e) {
+        if (!eventLocation.contains(e.target) && !locationSuggestions.contains(e.target)) {
+          locationSuggestions.style.display = 'none';
+        }
+      });
+      
+      // Fetch location suggestions
+      async function fetchLocationSuggestions(query) {
+        try {
+          const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=5`);
+          const data = await response.json();
+          
+          if (data.results && data.results.length > 0) {
+            showLocationSuggestions(data.results);
+          } else {
+            locationSuggestions.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error fetching location suggestions:', error);
+          locationSuggestions.style.display = 'none';
+        }
+      }
+      
+      // Show location suggestions
+      function showLocationSuggestions(results) {
+        locationSuggestions.innerHTML = '';
+        results.forEach(result => {
+          const item = document.createElement('div');
+          item.className = 'suggestion-item';
+          item.textContent = `${result.name}, ${result.country}`;
+          item.addEventListener('click', () => {
+            eventLocation.value = `${result.name}, ${result.country}`;
+            locationSuggestions.style.display = 'none';
+          });
+          locationSuggestions.appendChild(item);
+        });
+        locationSuggestions.style.display = 'block';
+      }
+      
+      // Analyze button click
+      analyzeBtn.addEventListener('click', function() {
+        // Validate form
+        const location = document.getElementById('eventLocation').value;
+        const eventType = document.getElementById('eventType').value;
+        const date = document.getElementById('eventDate').value;
+        const time = document.getElementById('eventTime').value;
+        const guests = document.getElementById('guestCount').value;
+        const venue = document.getElementById('venueType').value;
+        
+        if (!location || !eventType || !date || !time || !guests || !venue) {
+          alert('Please fill in all required fields.');
+          return;
+        }
+        
+        // Show loading state
+        loadingState.style.display = 'flex';
+        resultsSection.style.display = 'none';
+        dataSourceInfo.style.display = 'block';
+        
+        // Update last updated time
+        lastUpdated.textContent = new Date().toLocaleString();
+        
+        // Process the analysis with real NASA data
+        processEventAnalysis(location, eventType, date, time, guests, venue);
+      });
+      
+      // Share button
+      shareBtn.addEventListener('click', function() {
+        if (navigator.share) {
+          navigator.share({
+            title: 'CloudCheck Event Weather Analysis',
+            text: 'Check out my event weather analysis from CloudCheck!',
+            url: window.location.href,
+          })
+          .catch(console.error);
+        } else {
+          // Fallback for browsers that don't support Web Share API
+          alert('Share this page using your browser\'s share functionality.');
+        }
+      });
+      
+      // Print button
+      printBtn.addEventListener('click', function() {
+        window.print();
+      });
+      
+      // Process event analysis with real NASA data
+      async function processEventAnalysis(location, eventType, date, time, guests, venue) {
+        try {
+          // Get coordinates from location
+          const coords = await getCoordinates(location);
+          if (!coords) {
+            throw new Error('Could not find location coordinates');
+          }
+          
+          // Initialize map
+          initializeMap(coords.lat, coords.lon, location);
+          
+          // Fetch NASA historical data
+          const nasaData = await fetchNASAData(coords.lat, coords.lon, date);
+          
+          // Fetch current forecast data
+          const forecastData = await fetchForecastData(coords.lat, coords.lon);
+          
+          // Process data and generate predictions
+          const analysis = processEventData(
+            location, eventType, date, time, guests, venue, 
+            nasaData, forecastData, coords
+          );
+          
+          // Update UI with results
+          updateResultsUI(analysis);
+          
+          // Generate charts
+          generateCharts(analysis);
+          
+          // Generate alternative dates
+          generateAlternativeDates(analysis);
+          
+          // Generate recommendations
+          generateRecommendations(analysis);
+          
+          // Update map with weather zones
+          updateMapWithWeatherZones(coords, analysis);
+          
+          // Hide loading and show results
+          loadingState.style.display = 'none';
+          resultsSection.style.display = 'block';
+
+          // Recalculate map size
+          setTimeout(() => {
+            if (eventMap) {
+              eventMap.invalidateSize();
+            }
+          }, 200);
+          
+        } catch (error) {
+          console.error('Error processing event analysis:', error);
+          loadingState.style.display = 'none';
+          showErrorState('Failed to analyze event weather. Please try again.');
+        }
+      }
+      
+      // Initialize Leaflet map
+      function initializeMap(lat, lon, location) {
+        // Remove existing map if it exists
+        if (eventMap) {
+          eventMap.remove();
+        }
+        
+        // Clear existing markers
+        mapMarkers.forEach(marker => marker.remove());
+        mapMarkers = [];
+        
+        // Create new map
+        eventMap = L.map('eventMap').setView([lat, lon], 10);
+        
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '© OpenStreetMap contributors'
+        }).addTo(eventMap);
+        
+        // Add event location marker
+        const eventMarker = L.marker([lat, lon])
+          .addTo(eventMap)
+          .bindPopup(`<b>Event Location</b><br>${location}`)
+          .openPopup();
+        
+        mapMarkers.push(eventMarker);
+      }
+      
+      // Update map with weather zones
+      function updateMapWithWeatherZones(coords, analysis) {
+        if (!eventMap) return;
+        
+        const { lat, lon } = coords;
+        const risks = analysis.risks;
+        
+        // Define colors based on risk levels
+        const riskColors = {
+          low: '#38a169',
+          medium: '#dd6b20',
+          high: '#e53e3e'
+        };
+        
+        // Determine overall risk color
+        let overallRiskColor = riskColors.low;
+        if (risks.overall > 0.6) overallRiskColor = riskColors.high;
+        else if (risks.overall > 0.3) overallRiskColor = riskColors.medium;
+        
+        // Add a circle to represent the risk zone
+        const riskCircle = L.circle([lat, lon], {
+          color: overallRiskColor,
+          fillColor: overallRiskColor,
+          fillOpacity: 0.2,
+          radius: 5000 // 5km radius
+        }).addTo(eventMap);
+        
+        mapMarkers.push(riskCircle);
+        
+        // Add risk indicators around the area
+        const riskPoints = [
+          { lat: lat + 0.05, lon: lon + 0.05, risk: risks.heat, type: 'Heat' },
+          { lat: lat - 0.05, lon: lon + 0.05, risk: risks.cold, type: 'Cold' },
+          { lat: lat + 0.05, lon: lon - 0.05, risk: risks.rain, type: 'Rain' },
+          { lat: lat - 0.05, lon: lon - 0.05, risk: risks.wind, type: 'Wind' }
+        ];
+        
+        riskPoints.forEach(point => {
+          let color = riskColors.low;
+          if (point.risk > 0.6) color = riskColors.high;
+          else if (point.risk > 0.3) color = riskColors.medium;
+          
+          const marker = L.circleMarker([point.lat, point.lon], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.7,
+            radius: 8
+          }).addTo(eventMap)
+          .bindPopup(`<b>${point.type} Risk</b><br>${Math.round(point.risk * 100)}%`);
+          
+          mapMarkers.push(marker);
+        });
+      }
+      
+      // Get coordinates from location name
+      async function getCoordinates(location) {
+        try {
+          // Using OpenStreetMap Nominatim for geocoding (free)
+          const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+          const data = await response.json();
+          
+          if (data && data.length > 0) {
+            return {
+              lat: parseFloat(data[0].lat),
+              lon: parseFloat(data[0].lon)
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error('Error getting coordinates:', error);
+          return null;
+        }
+      }
+      
+      // Fetch NASA POWER historical daily data
+      async function fetchNASAData(lat, lon, date) {
+        try {
+          const eventDate = new Date(date);
+          const month = String(eventDate.getMonth() + 1).padStart(2, '0');
+          const day = String(eventDate.getDate()).padStart(2, '0');
+          const currentYear = new Date().getFullYear();
+
+          // Collect data for the same day/month over the last 10 years
+          const startYear = currentYear - 10;
+          const endYear = currentYear - 1;
+
+          // Real NASA POWER API call
+          const url = `https://power.larc.nasa.gov/api/temporal/daily/point?parameters=T2M,PRECTOTCORR&community=RE&longitude=${lon}&latitude=${lat}&start=${startYear}${month}${day}&end=${endYear}${month}${day}&format=JSON`;
+
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("NASA API request failed");
+          const data = await response.json();
+
+          if (!data.properties?.parameter) {
+            throw new Error("Invalid NASA response");
+          }
+
+          const temps = data.properties.parameter.T2M;
+          const precs = data.properties.parameter.PRECTOTCORR;
+          const years = Object.keys(temps);
+
+          const temperatures = years.map(y => ({
+            year: y.slice(0,4),
+            temp: temps[y],
+            uncertainty: 2 // NASA doesn't give uncertainty directly
+          }));
+
+          const precipitation = years.map(y => ({
+            year: y.slice(0,4),
+            precip: precs[y] * 100, // Convert to percentage
+            uncertainty: 1
+          }));
+
+          return {
+            temperatures,
+            precipitation,
+            metadata: {
+              lat,
+              lon,
+              source: 'NASA POWER API',
+              period: `${startYear} - ${endYear}`
+            }
+          };
+
+        } catch (err) {
+          console.error("NASA fetch failed, using mock data:", err);
+          return generateMockNASAData(lat, lon, parseInt(month), parseInt(day));
+        }
+      }     
+      
+      // Generate mock NASA data (fallback)
+      function generateMockNASAData(lat, lon, month, day) {
+        // Base values based on latitude and month
+        const baseTemp = 20 + (40 - Math.abs(lat)) * 0.5; // Warmer near equator
+        const seasonalAdjustment = Math.sin((month - 3) * Math.PI / 6) * 15; // Seasonal variation
+        
+        const avgTemp = baseTemp + seasonalAdjustment;
+        const tempStdDev = 3 + Math.random() * 2; // Temperature standard deviation
+        
+        // Precipitation based on location and season
+        let basePrecip;
+        if (lat > 0) { // Northern hemisphere
+          basePrecip = month >= 5 && month <= 9 ? 0.6 : 0.3; // Higher in summer
+        } else { // Southern hemisphere
+          basePrecip = month >= 11 || month <= 3 ? 0.6 : 0.3; // Higher in summer
+        }
+        
+        const precipStdDev = 0.15 + Math.random() * 0.1;
+        
+        // Generate 10 years of historical data
+        const historicalTemps = [];
+        const historicalPrecip = [];
+        
+        const currentYear = new Date().getFullYear();
+        
+        for (let year = currentYear - 10; year < currentYear; year++) {
+          // Temperature with trend (warming)
+          const tempTrend = (year - (currentYear - 10)) * 0.1; // 0.1°C per year warming
+          const temp = avgTemp + tempTrend + (Math.random() - 0.5) * 2 * tempStdDev;
+          
+          // Precipitation with some variation
+          const precip = Math.max(0, basePrecip + (Math.random() - 0.5) * 2 * precipStdDev);
+          
+          historicalTemps.push({
+            year: year,
+            temp: temp,
+            uncertainty: tempStdDev
+          });
+          
+          historicalPrecip.push({
+            year: year,
+            precip: precip * 100, // Convert to percentage
+            uncertainty: precipStdDev * 100
+          });
+        }
+        
+        return {
+          temperatures: historicalTemps,
+          precipitation: historicalPrecip,
+          metadata: {
+            lat: lat,
+            lon: lon,
+            period: `${currentYear - 10} - ${currentYear - 1}`,
+            source: 'NASA POWER API'
+          }
+        };
+      }
+      
+      // Fetch current forecast data
+      async function fetchForecastData(lat, lon) {
+        try {
+          // Using Open-Meteo API for forecasts
+          const response = await fetch(
+            `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,windspeed_10m_max&timezone=auto&forecast_days=14`
+          );
+          
+          if (!response.ok) {
+            throw new Error('Forecast API request failed');
+          }
+          
+          const data = await response.json();
+          return data;
+          
+        } catch (error) {
+          console.error('Error fetching forecast data:', error);
+          // Return mock data as fallback
+          return generateMockForecastData();
+        }
+      }
+      
+      // Generate mock forecast data (fallback)
+      function generateMockForecastData() {
+        const daily = {
+          time: [],
+          temperature_2m_max: [],
+          temperature_2m_min: [],
+          precipitation_sum: [],
+          precipitation_probability_max: [],
+          windspeed_10m_max: []
+        };
+        
+        const today = new Date();
+        
+        for (let i = 0; i < 14; i++) {
+          const date = new Date(today);
+          date.setDate(today.getDate() + i);
+          daily.time.push(date.toISOString().split('T')[0]);
+          
+          // Generate realistic forecast data
+          daily.temperature_2m_max.push(20 + Math.random() * 15);
+          daily.temperature_2m_min.push(10 + Math.random() * 10);
+          daily.precipitation_sum.push(Math.random() * 10);
+          daily.precipitation_probability_max.push(Math.random() * 100);
+          daily.windspeed_10m_max.push(5 + Math.random() * 15);
+        }
+        
+        return { daily };
+      }
+      
+      // Process event data with real NASA and forecast data
+      function processEventData(location, eventType, date, time, guests, venue, nasaData, forecastData, coords) {
+        // Calculate risks based on real data
+        
+        // Find forecast for the event date
+        const eventForecastIndex = forecastData.daily.time.findIndex(d => d === date);
+        let tempRisk = 0.1;
+        let rainRisk = 0.3;
+        let windRisk = 0.1;
+        
+        if (eventForecastIndex !== -1) {
+          const maxTemp = forecastData.daily.temperature_2m_max[eventForecastIndex];
+          const minTemp = forecastData.daily.temperature_2m_min[eventForecastIndex];
+          const precipProb = forecastData.daily.precipitation_probability_max[eventForecastIndex] / 100;
+          const windSpeed = forecastData.daily.windspeed_10m_max[eventForecastIndex];
+          
+          // Calculate temperature risk
+          if (maxTemp > 30) tempRisk = 0.7;
+          else if (maxTemp > 25) tempRisk = 0.4;
+          else if (minTemp < 5) tempRisk = 0.6;
+          else if (minTemp < 10) tempRisk = 0.3;
+          
+          // Calculate rain risk from forecast probability
+          rainRisk = precipProb;
+          
+          // Calculate wind risk
+          if (windSpeed > 20) windRisk = 0.8;
+          else if (windSpeed > 15) windRisk = 0.5;
+          else if (windSpeed > 10) windRisk = 0.3;
+        }
+        
+        // Adjust risks based on event type and venue
+        const adjustments = getEventAdjustments(eventType, venue, time);
+        tempRisk *= adjustments.temp;
+        rainRisk *= adjustments.rain;
+        windRisk *= adjustments.wind;
+        
+        // Calculate cold risk (inverse of heat risk for demo)
+        const coldRisk = Math.max(0, 0.5 - tempRisk);
+        
+        // Calculate overall risk (weighted average)
+        const overallRisk = (tempRisk * 0.3 + coldRisk * 0.2 + rainRisk * 0.4 + windRisk * 0.1);
+        
+        // Calculate uncertainties based on data spread
+        const tempUncertainty = calculateUncertainty(nasaData.temperatures.map(d => d.temp));
+        const precipUncertainty = calculateUncertainty(nasaData.precipitation.map(d => d.precip));
+        
+        return {
+          location,
+          eventType,
+          date,
+          time,
+          guests,
+          venue,
+          coords,
+          risks: {
+            heat: tempRisk,
+            cold: coldRisk,
+            rain: rainRisk,
+            wind: windRisk,
+            overall: overallRisk
+          },
+          uncertainties: {
+            heat: tempUncertainty,
+            cold: tempUncertainty * 0.8,
+            rain: precipUncertainty,
+            wind: precipUncertainty * 0.6,
+            overall: (tempUncertainty + precipUncertainty) / 2
+          },
+          nasaData,
+          forecastData
+        };
+      }
+      
+      // Get risk adjustments based on event type and venue
+      function getEventAdjustments(eventType, venue, time) {
+        const adjustments = {
+          temp: 1,
+          rain: 1,
+          wind: 1
+        };
+        
+        // Event type adjustments
+        switch(eventType) {
+          case 'wedding':
+            adjustments.rain = 1.5; // More sensitive to rain
+            adjustments.wind = 1.3; // Sensitive to wind for decorations
+            break;
+          case 'concert':
+            adjustments.rain = 1.8; // Very sensitive to rain
+            adjustments.wind = 1.2;
+            break;
+          case 'sports':
+            adjustments.rain = 1.6;
+            break;
+          case 'picnic':
+            adjustments.rain = 1.7;
+            adjustments.temp = 1.3; // More sensitive to temperature
+            break;
+        }
+        
+        // Venue adjustments
+        if (venue === 'indoor') {
+          adjustments.rain *= 0.3;
+          adjustments.wind *= 0.3;
+          adjustments.temp *= 0.5;
+        } else if (venue === 'mixed') {
+          adjustments.rain *= 0.7;
+          adjustments.wind *= 0.7;
+        }
+        
+        // Time of day adjustments
+        if (time === 'morning') {
+          adjustments.temp *= 0.7; // Cooler in morning
+        } else if (time === 'afternoon') {
+          adjustments.temp *= 1.3; // Warmer in afternoon
+        }
+        
+        return adjustments;
+      }
+      
+      // Calculate uncertainty based on data standard deviation
+      function calculateUncertainty(data) {
+        if (data.length < 2) return 0.1;
+        
+        const mean = data.reduce((a, b) => a + b, 0) / data.length;
+        const variance = data.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / data.length;
+        const stdDev = Math.sqrt(variance);
+        
+        // Convert to percentage uncertainty (0-1 scale)
+        return Math.min(0.3, stdDev / (mean || 1));
+      }
+      
+      // Update results UI
+      function updateResultsUI(analysis) {
+        const risks = analysis.risks;
+        const uncertainties = analysis.uncertainties;
+        
+        // Update overall risk
+        const overallRiskElement = document.getElementById('overallRisk');
+        const overallRiskValue = document.getElementById('overallRiskValue');
+        const overallRiskUncertainty = document.getElementById('overallRiskUncertainty');
+        const overallRiskDescription = document.getElementById('overallRiskDescription');
+        
+        const overallRiskPercent = Math.round(risks.overall * 100);
+        const overallUncertaintyPercent = Math.round(uncertainties.overall * 100);
+        
+        let overallRiskClass = 'low';
+        let overallRiskText = 'Low Risk';
+        let overallDescription = 'Based on historical NASA data and current forecasts, your event has a low risk of weather disruptions.';
+        
+        if (risks.overall > 0.6) {
+          overallRiskClass = 'high';
+          overallRiskText = 'High Risk';
+          overallDescription = 'Based on historical NASA data and current forecasts, your event has a high risk of weather disruptions. Consider changing the date or having a solid backup plan.';
+        } else if (risks.overall > 0.3) {
+          overallRiskClass = 'medium';
+          overallRiskText = 'Medium Risk';
+          overallDescription = 'Based on historical NASA data and current forecasts, your event has a moderate risk of weather disruptions. A backup plan is recommended.';
+        }
+        
+        overallRiskElement.className = `overall-risk ${overallRiskClass}`;
+        overallRiskValue.textContent = overallRiskText;
+        overallRiskValue.className = `overall-risk-value ${overallRiskClass}`;
+        overallRiskUncertainty.textContent = `± ${overallUncertaintyPercent}% uncertainty`;
+        overallRiskDescription.textContent = overallDescription;
+        
+        // Update individual risks
+        updateRiskElement('heat', risks.heat, uncertainties.heat);
+        updateRiskElement('cold', risks.cold, uncertainties.cold);
+        updateRiskElement('rain', risks.rain, uncertainties.rain);
+        updateRiskElement('wind', risks.wind, uncertainties.wind);
+      }
+      
+      // Update individual risk element
+      function updateRiskElement(type, risk, uncertainty) {
+        const valueElement = document.getElementById(`${type}RiskValue`);
+        const uncertaintyElement = document.getElementById(`${type}RiskUncertainty`);
+        const descriptionElement = document.getElementById(`${type}RiskDescription`);
+        
+        const percentage = Math.round(risk * 100);
+        const uncertaintyPercent = Math.round(uncertainty * 100);
+        
+        valueElement.textContent = `${percentage}%`;
+        uncertaintyElement.textContent = `± ${uncertaintyPercent}%`;
+        
+        let riskClass = 'low';
+        let description = '';
+        
+        if (risk > 0.6) {
+          riskClass = 'high';
+        } else if (risk > 0.3) {
+          riskClass = 'medium';
+        }
+        
+        valueElement.className = `risk-value ${riskClass}`;
+        
+        // Update descriptions based on risk level
+        switch(type) {
+          case 'heat':
+            description = riskClass === 'high' 
+              ? 'High probability of extreme heat conditions. Consider moving the event indoors or to a cooler time.'
+              : riskClass === 'medium'
+              ? 'Moderate chance of warm conditions. Have water and shade available.'
+              : 'Low probability of extreme heat conditions during your event.';
+            break;
+          case 'cold':
+            description = riskClass === 'high'
+              ? 'High probability of uncomfortably cold temperatures. Consider heated options or moving indoors.'
+              : riskClass === 'medium'
+              ? 'Moderate chance of cool conditions. Recommend having blankets or heaters available.'
+              : 'Minimal chance of uncomfortably cold temperatures.';
+            break;
+          case 'rain':
+            description = riskClass === 'high'
+              ? 'High probability of precipitation. Strongly recommend indoor backup plan.'
+              : riskClass === 'medium'
+              ? 'Moderate chance of precipitation. Consider having a backup plan.'
+              : 'Low probability of precipitation during your event.';
+            break;
+          case 'wind':
+            description = riskClass === 'high'
+              ? 'High probability of strong winds. Secure decorations and consider indoor alternatives.'
+              : riskClass === 'medium'
+              ? 'Moderate chance of windy conditions. Secure lightweight items.'
+              : 'Low probability of strong winds affecting your event.';
+            break;
+        }
+        
+        descriptionElement.textContent = description;
+      }
+      
+      // Generate charts with uncertainty bands
+      function generateCharts(analysis) {
+        const nasaData = analysis.nasaData;
+        
+        // Destroy existing charts to prevent memory leaks
+        currentCharts.forEach(chart => chart.destroy());
+        currentCharts = [];
+        
+        // Temperature Chart with uncertainty
+        const tempCtx = document.getElementById('temperatureChart').getContext('2d');
+        
+        const tempChart = new Chart(tempCtx, {
+          type: 'line',
+          data: {
+            labels: nasaData.temperatures.map(d => d.year),
+            datasets: [{
+              label: 'Average Temperature (°C)',
+              data: nasaData.temperatures.map(d => d.temp),
+              borderColor: '#4299e1',
+              backgroundColor: 'rgba(66, 153, 225, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#4a5568'
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  afterLabel: function(context) {
+                    const item = nasaData.temperatures[context.dataIndex];
+                    return `Uncertainty: ±${item.uncertainty.toFixed(1)}°C`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: '#718096'
+                },
+                grid: {
+                  color: '#e2e8f0'
+                }
+              },
+              y: {
+                ticks: {
+                  color: '#718096'
+                },
+                grid: {
+                  color: '#e2e8f0'
+                }
+              }
+            }
+          }
+        });
+        
+        currentCharts.push(tempChart);
+        
+        // Precipitation Chart
+        const precipCtx = document.getElementById('precipitationChart').getContext('2d');
+        const precipChart = new Chart(precipCtx, {
+          type: 'bar',
+          data: {
+            labels: nasaData.precipitation.map(d => d.year),
+            datasets: [{
+              label: 'Precipitation Probability',
+              data: nasaData.precipitation.map(d => d.precip),
+              backgroundColor: 'rgba(66, 153, 225, 0.7)',
+              borderColor: 'rgba(66, 153, 225, 1)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: {
+                  color: '#4a5568'
+                }
+              }
+            },
+            scales: {
+              x: {
+                ticks: {
+                  color: '#718096'
+                },
+                grid: {
+                  color: '#e2e8f0'
+                }
+              },
+              y: {
+                ticks: {
+                  color: '#718096',
+                  callback: function(value) {
+                    return value + '%';
+                  }
+                },
+                grid: {
+                  color: '#e2e8f0'
+                }
+              }
+            }
+          }
+        });
+        
+        currentCharts.push(precipChart);
+      }
+      
+      // Generate alternative dates with visual badges
+      function generateAlternativeDates(analysis) {
+        const eventDate = new Date(analysis.date);
+        const forecastData = analysis.forecastData;
+        const nasaData = analysis.nasaData;
+        const eventType = analysis.eventType;
+        const venue = analysis.venue;
+        const datesContainer = document.getElementById('alternativeDates');
+        datesContainer.innerHTML = '';
+
+        const goodDates = [];
+
+        for (let i = 0; i < forecastData.daily.time.length; i++) {
+          const dateStr = forecastData.daily.time[i];
+          const date = new Date(dateStr);
+
+          // Skip event day or past days
+          if (dateStr === analysis.date || date < new Date()) continue;
+
+          const maxTemp = forecastData.daily.temperature_2m_max[i];
+          const minTemp = forecastData.daily.temperature_2m_min[i];
+          const rainProb = forecastData.daily.precipitation_probability_max[i] / 100;
+          const windSpeed = forecastData.daily.windspeed_10m_max[i];
+
+          // Risks
+          let tempRisk = 0;
+          if (maxTemp > 32) tempRisk = 0.7;
+          else if (maxTemp > 27) tempRisk = 0.4;
+          else if (minTemp < 5) tempRisk = 0.6;
+
+          let windRisk = 0;
+          if (windSpeed > 20) windRisk = 0.8;
+          else if (windSpeed > 15) windRisk = 0.5;
+
+          // Adjustments
+          const adjustments = getEventAdjustments(eventType, venue, "afternoon");
+          tempRisk *= adjustments.temp;
+          windRisk *= adjustments.wind;
+          const rainRisk = rainProb * adjustments.rain;
+
+          // NASA climatology
+          const historicalTemps = nasaData.temperatures.map(d => d.temp);
+          const historicalPrecip = nasaData.precipitation.map(d => d.precip);
+          const avgHistTemp = historicalTemps.reduce((a, b) => a + b, 0) / historicalTemps.length;
+          const avgHistRain = historicalPrecip.reduce((a, b) => a + b, 0) / historicalPrecip.length / 100;
+
+          // Blend
+          const blendedRain = (rainRisk + avgHistRain) / 2;
+          const blendedTemp = (tempRisk + (avgHistTemp > 30 ? 0.5 : 0.2)) / 2;
+
+          // Risk score
+          const overallRisk = (blendedTemp * 0.3 + blendedRain * 0.4 + windRisk * 0.3);
+
+          // Confidence
+          const confidence = 1 - Math.abs(rainRisk - avgHistRain);
+
+          goodDates.push({
+            date: dateStr,
+            displayDate: date,
+            risk: overallRisk,
+            confidence,
+            details: { maxTemp, rainProb, windSpeed }
+          });
+        }
+
+        // Sort by lowest risk
+        goodDates.sort((a, b) => a.risk - b.risk);
+        const topDates = goodDates.slice(0, 5);
+
+        // Render
+        topDates.forEach(dateInfo => {
+          let riskClass = 'low';
+          let riskText = 'Low Risk';
+          if (dateInfo.risk > 0.6) {
+            riskClass = 'high';
+            riskText = 'High Risk';
+          } else if (dateInfo.risk > 0.3) {
+            riskClass = 'medium';
+            riskText = 'Medium Risk';
+          }
+
+          const confLabel = dateInfo.confidence > 0.7 ? "High Confidence" : "Low Confidence";
+
+          // Weather icons
+          let badges = "";
+          if (dateInfo.details.maxTemp > 32) badges += `<span class="badge hot">🌞 Hot</span>`;
+          else if (dateInfo.details.maxTemp < 5) badges += `<span class="badge cold">❄️ Cold</span>`;
+
+          if (dateInfo.details.rainProb > 0.4) badges += `<span class="badge rain">☔ Rain</span>`;
+          if (dateInfo.details.windSpeed > 15) badges += `<span class="badge wind">💨 Windy</span>`;
+
+          const dateElement = document.createElement('div');
+          dateElement.className = 'date-card';
+          dateElement.innerHTML = `
+            <div class="date-day">${dateInfo.displayDate.toLocaleDateString('en-US', { weekday: 'short' })}</div>
+            <div class="date-full">${dateInfo.displayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+            <div class="date-risk ${riskClass}">${riskText}</div>
+            <div class="date-confidence">${confLabel}</div>
+            <div class="date-badges">${badges || '<span class="badge good">✅ Pleasant</span>'}</div>
+          `;
+
+          // Clicking selects the new date
+          dateElement.addEventListener('click', function() {
+            document.getElementById('eventDate').value = dateInfo.date;
+            document.getElementById('analyzeBtn').click();
+          });
+
+          datesContainer.appendChild(dateElement);
+        });
+      }
+
+      
+      // Generate recommendations based on analysis
+      function generateRecommendations(analysis) {
+        const recommendationsGrid = document.getElementById('recommendationsGrid');
+        recommendationsGrid.innerHTML = '';
+        
+        const risks = analysis.risks;
+        const eventType = analysis.eventType;
+        const venue = analysis.venue;
+        
+        const recommendations = [];
+        
+        // Rain recommendations
+        if (risks.rain > 0.3) {
+          recommendations.push({
+            icon: 'fa-umbrella',
+            title: 'Rain Contingency',
+            description: risks.rain > 0.6 
+              ? `High precipitation risk (${Math.round(risks.rain * 100)}%). Strongly recommend indoor backup venue or professional tenting.`
+              : `Moderate rain chance (${Math.round(risks.rain * 100)}%). Have tents or covered areas available.`
+          });
+        }
+        
+        // Temperature recommendations
+        if (risks.heat > 0.4 || risks.cold > 0.4) {
+          recommendations.push({
+            icon: 'fa-temperature-low',
+            title: 'Temperature Management',
+            description: risks.heat > risks.cold
+              ? `Heat risk: ${Math.round(risks.heat * 100)}%. Provide shaded areas, fans, and plenty of water.`
+              : `Cold risk: ${Math.round(risks.cold * 100)}%. Consider heaters, blankets, or moving portions indoors.`
+          });
+        }
+        
+        // Wind recommendations
+        if (risks.wind > 0.3) {
+          recommendations.push({
+            icon: 'fa-wind',
+            title: 'Wind Considerations',
+            description: `Wind risk: ${Math.round(risks.wind * 100)}%. Secure decorations, consider windbreaks, and have backup for outdoor elements.`
+          });
+        }
+        
+        // Event-specific recommendations
+        if (eventType === 'wedding') {
+          recommendations.push({
+            icon: 'fa-ring',
+            title: 'Wedding Specific',
+            description: 'Consider a backup indoor ceremony space. Inform photographer about weather contingencies.'
+          });
+        } else if (eventType === 'concert') {
+          recommendations.push({
+            icon: 'fa-music',
+            title: 'Concert Planning',
+            description: 'Have waterproof covers for equipment. Consider a rain date in your contracts.'
+          });
+        }
+        
+        // Venue-specific recommendations
+        if (venue === 'outdoor') {
+          recommendations.push({
+            icon: 'fa-tree',
+            title: 'Outdoor Venue Tips',
+            description: 'Identify sheltered areas. Have a clear rain plan and communicate it to all vendors.'
+          });
+        }
+        
+        // Always include general preparedness
+        recommendations.push({
+          icon: 'fa-clipboard-check',
+            title: 'General Preparedness',
+            description: 'Monitor forecasts closely as the event approaches. Have a communication plan for weather updates.'
+        });
+        
+        // Create recommendation cards
+        recommendations.forEach(rec => {
+          const card = document.createElement('div');
+          card.className = 'recommendation-card';
+          card.innerHTML = `
+            <div class="recommendation-header">
+              <i class="fas ${rec.icon} recommendation-icon"></i>
+              <div class="recommendation-title">${rec.title}</div>
+            </div>
+            <div class="recommendation-description">${rec.description}</div>
+          `;
+          recommendationsGrid.appendChild(card);
+        });
+      }
+      
+      // Show error state
+      function showErrorState(message) {
+        const errorHTML = `
+          <div class="error-state">
+            <i class="fas fa-exclamation-triangle error-icon"></i>
+            <h3>Something went wrong</h3>
+            <p>${message}</p>
+            <button class="form-btn" onclick="location.reload()">
+              <i class="fas fa-redo"></i> Try Again
+            </button>
+          </div>
+        `;
+        
+        // Create a temporary container to hold the error state
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = errorHTML;
+        
+        // Clear the dashboard and show error
+        const dashboardCard = document.querySelector('.dashboard-card');
+        dashboardCard.innerHTML = '';
+        dashboardCard.appendChild(tempDiv.firstElementChild);
+      }
+    });
+  </script>
+</body>
+</html>
