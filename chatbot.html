@@ -52,7 +52,7 @@
 
     .nav-links {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       align-items: center;
       padding-right: 17.5%;
       position: relative;
@@ -70,6 +70,70 @@
 
     .nav-links a:hover {
       color: #000;
+    }
+
+    .language-toggle {
+      display: flex;
+      background: rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      font-family: 'Inter', sans-serif;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #f5f7fa;
+      color: #2d3748;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn.active {
+      background: rgb(0, 0, 0);
+      color: rgb(255, 255, 255);
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .signin-btn {
+      background: #f5f7fa;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      color: #2d3748;
+    }
+
+    .signin-btn:hover {
+      background: rgb(0, 0, 0);
+      color: #ffffff !important;
+    }
+
+    .signup-btn {
+      background: #000;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      color: #ffffff !important;
+    }
+
+    .signup-btn:hover {
+      transform: translateY(-0.3px);
+      background: #f5f7fa;
+      color: #000000 !important;
+      border: 1px solid rgba(0, 0, 0, 0.2);
     }
 
     .resources-dropdown {
@@ -521,6 +585,22 @@
       }
     }
 
+    @media (max-width: 1024px) {
+      .navbar {
+        padding: 20px;
+      }
+      .logo {
+        padding-left: 0;
+      }
+      .nav-links {
+        padding-right: 0;
+      }
+      .resources-dropdown {
+        left: -50px;
+        min-width: 200px;
+      }
+    }
+
     @media (max-width: 768px) {
       .dashboard-card {
         padding: 20px;
@@ -535,10 +615,15 @@
       }
       .nav-links {
         padding-right: 0;
+        gap: 10px;
       }
       .resources-dropdown {
-        left: -50px;
-        min-width: 200px;
+        left: -100px;
+        min-width: 180px;
+      }
+      .auth-buttons {
+        flex-direction: column;
+        gap: 5px;
       }
     }
   </style>
@@ -550,53 +635,51 @@
     <div class="nav-links">
       <a href="#" id="resourcesLink">Resources <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i></a>
       <div class="resources-dropdown" id="resourcesDropdown">
-        <a href="https://power.larc.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-satellite resource-icon"></i>
+        <a href="event_weather_planner.html" class="resource-item">
+          <i class="fas fa-calendar-alt resource-icon"></i>
           <div class="resource-text">
-            <div>NASA POWER API</div>
-            <div class="resource-desc">Weather & solar data</div>
+            <div>Event Weather Planner</div>
+            <div class="resource-desc">Plan events with weather insights</div>
           </div>
         </a>
-        <a href="https://gpm.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-cloud-rain resource-icon"></i>
+        <a href="sports_weather_planner.html" class="resource-item">
+          <i class="fas fa-running resource-icon"></i>
           <div class="resource-text">
-            <div>GPM IMERG</div>
-            <div class="resource-desc">Precipitation data</div>
+            <div>Sports Weather Planner</div>
+            <div class="resource-desc">Optimize sports activities</div>
           </div>
         </a>
-        <a href="https://worldview.earthdata.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-globe resource-icon"></i>
+        <a href="agriculture_weather_planner.html" class="resource-item">
+          <i class="fas fa-tractor resource-icon"></i>
           <div class="resource-text">
-            <div>NASA Worldview</div>
-            <div class="resource-desc">Satellite imagery</div>
+            <div>Agriculture Weather Planner</div>
+            <div class="resource-desc">Agricultural planning tools</div>
           </div>
         </a>
-        <a href="https://open-meteo.com/" class="resource-item" target="_blank">
-          <i class="fas fa-wind resource-icon"></i>
+        <a href="travel_weather_planner.html" class="resource-item">
+          <i class="fas fa-suitcase-rolling resource-icon"></i>
           <div class="resource-text">
-            <div>Open-Meteo API</div>
-            <div class="resource-desc">Weather forecasts</div>
+            <div>Travel Weather Planner</div>
+            <div class="resource-desc">Travel planning assistance</div>
           </div>
         </a>
-        <a href="https://developers.google.com/maps/documentation/javascript" class="resource-item" target="_blank">
-          <i class="fas fa-map-marker-alt resource-icon"></i>
+        <a href="emergency.html" class="resource-item">
+          <i class="fas fa-exclamation-triangle resource-icon"></i>
           <div class="resource-text">
-            <div>Google Maps API</div>
-            <div class="resource-desc">Routes & Places</div>
-          </div>
-        </a>
-        <a href="https://github.com/your-repo" class="resource-item" target="_blank">
-          <i class="fab fa-github resource-icon"></i>
-          <div class="resource-text">
-            <div>Project GitHub</div>
-            <div class="resource-desc">Source code & docs</div>
+            <div>Emergency Weather</div>
+            <div class="resource-desc">Critical weather alerts</div>
           </div>
         </a>
       </div>
-      <a href="index.html">Live Weather</a>
-      <a href="#">Local</a>
-      <a href="#">English</a>
-      <a href="login.html">Account</a>
+      <a href="chatbot.html">CloudBot</a>
+      <div class="language-toggle">
+        <button class="lang-btn active" id="localBtn">Local</button>
+        <button class="lang-btn" id="englishBtn">English</button>
+      </div>
+      <div class="auth-buttons">
+        <a href="login.html" class="auth-btn signin-btn">Sign In</a>
+        <a href="signup.html" class="auth-btn signup-btn">Sign Up</a>
+      </div>
     </div>
   </div>
 
@@ -766,6 +849,20 @@
           if (!resourcesLink.contains(e.target) && !resourcesDropdown.contains(e.target)) {
             resourcesDropdown.classList.remove('show');
           }
+        });
+
+        // Language toggle functionality
+        const localBtn = document.getElementById('localBtn');
+        const englishBtn = document.getElementById('englishBtn');
+
+        localBtn.addEventListener('click', function() {
+          localBtn.classList.add('active');
+          englishBtn.classList.remove('active');
+        });
+
+        englishBtn.addEventListener('click', function() {
+          englishBtn.classList.add('active');
+          localBtn.classList.remove('active');
         });
       }
 
