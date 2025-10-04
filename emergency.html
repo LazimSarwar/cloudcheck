@@ -26,7 +26,7 @@
       min-height: 100vh;
     }
 
-    /* Navbar */
+    /* Navbar - Updated to match index.html */
     .navbar {
       margin-top: 20px;
       display: flex;
@@ -37,58 +37,58 @@
       position: relative;
     }
 
-    /* Logo */
     .logo {
       font-size: 2.5rem;
       font-weight: 700;
       background: #000;
+      background-size: 300% 300%;
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      animation: stormShimmer 3s infinite linear;
       padding-left: 17%;
     }
 
-    /* Nav links */
+    @keyframes stormShimmer {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
     .nav-links {
       display: flex;
-      gap: 20px;
+      gap: 15px;
       align-items: center;
       padding-right: 17.5%;
       position: relative;
     }
 
     .nav-links a {
-      color: #4a5568;
+      color: #333333;
       text-decoration: none;
       font-size: 0.95rem;
       transition: color 0.3s ease;
       position: relative;
       cursor: pointer;
-      font-weight: 500;
     }
 
     .nav-links a:hover {
-      color: #000;
+      color: rgb(0, 0, 0);
     }
 
-    .nav-links a.active {
-      color: #4facfe;
-    }
-
-    /* Resources Dropdown */
     .resources-dropdown {
       position: absolute;
       top: 100%;
       left: 0;
-      background: white;
+      background: rgba(0, 0, 0, 0.95);
       backdrop-filter: blur(20px);
-      border: 1px solid #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
       min-width: 250px;
       padding: 10px 0;
       z-index: 1000;
       display: none;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
     }
 
     .resources-dropdown.show {
@@ -109,17 +109,17 @@
 
     .resource-item {
       padding: 12px 20px;
-      color: #2d3748;
+      color: white !important;
       text-decoration: none;
       display: flex;
       align-items: center;
       gap: 10px;
       transition: all 0.3s ease;
-      border-bottom: 1px solid #f7fafc;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .resource-item:hover {
-      background: #f7fafc;
+      background: rgba(255, 255, 255, 0.1);
       transform: translateX(1px);
     }
 
@@ -129,7 +129,7 @@
 
     .resource-icon {
       font-size: 1rem;
-      color: #4299e1;
+      color: #6497b1;
       width: 20px;
       text-align: center;
     }
@@ -140,8 +140,72 @@
 
     .resource-desc {
       font-size: 0.8rem;
-      color: #718096;
+      color: rgba(255, 255, 255, 0.6);
       margin-top: 2px;
+    }
+
+    .language-toggle {
+      display: flex;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .lang-btn {
+      font-family: 'Inter', sans-serif;
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      background: #000;
+      color: #ffffff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .lang-btn.active {
+      background: rgb(255, 255, 255);
+      color: rgb(0, 0, 0);
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .auth-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .signin-btn {
+      background: #000;
+      border: 1px solid rgba(255, 255, 255, 0.601);
+      color: white !important;
+    }
+
+    .signin-btn:hover {
+      background: rgb(255, 255, 255);
+      color: #000 !important;
+    }
+
+    .signup-btn {
+      background: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.601);
+      color: rgb(0, 0, 0) !important;
+    }
+
+    .signup-btn:hover {
+      transform: translateY(-0.3px);
+      background: rgb(0, 0, 0);
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.601);
     }
 
     /* Dashboard */
@@ -742,8 +806,6 @@
       }
       .navbar {
         padding: 20px;
-        flex-direction: column;
-        gap: 15px;
       }
       .logo {
         padding-left: 0;
@@ -771,59 +833,57 @@
   </style>
 </head>
 <body>
-  <!-- Navbar -->
+  <!-- Navbar - Updated to match index.html -->
   <div class="navbar">
     <div class="logo">cloudcheck</div>
     <div class="nav-links">
       <a href="#" id="resourcesLink">Resources <i class="fas fa-chevron-down" style="font-size: 0.8rem; margin-left: 5px;"></i></a>
       <div class="resources-dropdown" id="resourcesDropdown">
-        <a href="https://power.larc.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-satellite resource-icon"></i>
+        <a href="event_weather_planner.html" class="resource-item">
+          <i class="fas fa-calendar-alt resource-icon"></i>
           <div class="resource-text">
-            <div>NASA POWER API</div>
-            <div class="resource-desc">Weather & solar data</div>
+            <div>Event Weather Planner</div>
+            <div class="resource-desc">Plan events with weather insights</div>
           </div>
         </a>
-        <a href="https://gpm.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-cloud-rain resource-icon"></i>
+        <a href="sports_weather_planner.html" class="resource-item">
+          <i class="fas fa-running resource-icon"></i>
           <div class="resource-text">
-            <div>GPM IMERG</div>
-            <div class="resource-desc">Precipitation data</div>
+            <div>Sports Weather Planner</div>
+            <div class="resource-desc">Optimize sports activities</div>
           </div>
         </a>
-        <a href="https://worldview.earthdata.nasa.gov/" class="resource-item" target="_blank">
-          <i class="fas fa-globe resource-icon"></i>
+        <a href="agriculture_weather_planner.html" class="resource-item">
+          <i class="fas fa-tractor resource-icon"></i>
           <div class="resource-text">
-            <div>NASA Worldview</div>
-            <div class="resource-desc">Satellite imagery</div>
+            <div>Agriculture Weather Planner</div>
+            <div class="resource-desc">Agricultural planning tools</div>
           </div>
         </a>
-        <a href="https://open-meteo.com/" class="resource-item" target="_blank">
-          <i class="fas fa-wind resource-icon"></i>
+        <a href="travel_weather_planner.html" class="resource-item">
+          <i class="fas fa-suitcase-rolling resource-icon"></i>
           <div class="resource-text">
-            <div>Open-Meteo API</div>
-            <div class="resource-desc">Weather forecasts</div>
+            <div>Travel Weather Planner</div>
+            <div class="resource-desc">Travel planning assistance</div>
           </div>
         </a>
-        <a href="https://api.bigdatacloud.net/" class="resource-item" target="_blank">
-          <i class="fas fa-map-marker-alt resource-icon"></i>
+        <a href="emergency.html" class="resource-item">
+          <i class="fas fa-exclamation-triangle resource-icon"></i>
           <div class="resource-text">
-            <div>BigDataCloud</div>
-            <div class="resource-desc">Geocoding services</div>
-          </div>
-        </a>
-        <a href="https://github.com/your-repo" class="resource-item" target="_blank">
-          <i class="fab fa-github resource-icon"></i>
-          <div class="resource-text">
-            <div>Project GitHub</div>
-            <div class="resource-desc">Source code & docs</div>
+            <div>Emergency Weather</div>
+            <div class="resource-desc">Critical weather alerts</div>
           </div>
         </a>
       </div>
-      <a href="index.html">Live Weather</a>
-      <a href="weather.html">Event Planner</a>
-      <a href="#" class="active">Emergency</a>
-      <a href="login.html">Account</a>
+      <a href="chatbot.html">CloudBot</a>
+      <div class="language-toggle">
+        <button class="lang-btn active" id="localBtn">Local</button>
+        <button class="lang-btn" id="englishBtn">English</button>
+      </div>
+      <div class="auth-buttons">
+        <a href="login.html" class="auth-btn signin-btn">Sign In</a>
+        <a href="signup.html" class="auth-btn signup-btn">Sign Up</a>
+      </div>
     </div>
   </div>
 
@@ -1677,6 +1737,8 @@
       const locationSuggestions = document.getElementById('locationSuggestions');
       const countryInfo = document.getElementById('countryInfo');
       const countryDetails = document.getElementById('countryDetails');
+      const localBtn = document.getElementById('localBtn');
+      const englishBtn = document.getElementById('englishBtn');
       
       // Map variable
       let emergencyMap = null;
@@ -1686,6 +1748,17 @@
       resourcesLink.addEventListener('click', function(e) {
         e.preventDefault();
         resourcesDropdown.classList.toggle('show');
+      });
+      
+      // Language toggle functionality
+      localBtn.addEventListener('click', function() {
+        localBtn.classList.add('active');
+        englishBtn.classList.remove('active');
+      });
+
+      englishBtn.addEventListener('click', function() {
+        englishBtn.classList.add('active');
+        localBtn.classList.remove('active');
       });
       
       // Close dropdown when clicking outside
